@@ -133,16 +133,7 @@ def signal():
     df = get_data()
 
     if df.empty:
-        return jsonify({
-            "error": "not enough data",
-            "rows": 0
-        })
-
-    if len(df) < 20:
-        return jsonify({
-            "error": "not enough data",
-            "rows": len(df)
-        })
+        return jsonify({"error": "not enough data"})
 
     try:
 
@@ -161,32 +152,26 @@ def signal():
 
         if ema9_value > ema20_value and rsi_value < 70:
             signal_value = "BUY"
-
         elif ema9_value < ema20_value:
             signal_value = "SELL"
-
         else:
             signal_value = "HOLD"
 
-last_time = int(last["time"])
-        
-return jsonify({
-    "pair": SYMBOL,
-    "signal": signal_value,
-    "price": round(price, 4),
-    "ema9": round(ema9_value, 4),
-    "ema20": round(ema20_value, 4),
-    "rsi": round(rsi_value, 2),
-    "rows": len(df),
-    "candle_time": last_time
-})
+        return jsonify({
+            "pair": SYMBOL,
+            "signal": signal_value,
+            "price": round(price, 4),
+            "ema9": round(ema9_value, 4),
+            "ema20": round(ema20_value, 4),
+            "rsi": round(rsi_value, 2),
+            "rows": len(df),
+            "candle_time": last_time
+        })
 
     except Exception as e:
         return jsonify({
             "error": str(e)
         })
-
-
 # =========================
 # Render
 # =========================
