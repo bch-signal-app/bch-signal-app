@@ -9,15 +9,22 @@ SYMBOL = "BCHUSDT"
 # 📊 Récupération données Binance
 def get_data():
     url = f"https://api.binance.com/api/v3/klines?symbol={SYMBOL}&interval=1h&limit=100"
-    data = requests.get(url, timeout=10).json()
+    
+    r = requests.get(url, timeout=10)
+    data = r.json()
+
+    if not isinstance(data, list):
+        return pd.DataFrame()
 
     df = pd.DataFrame(data, columns=[
         "t","o","h","l","c","v","x","x2","x3","x4","x5","x6"
     ])
 
     df["c"] = pd.to_numeric(df["c"], errors="coerce")
-    return df.dropna()
 
+    df = df.dropna()
+
+    return df
 # 📈 EMA
 def ema(series, span):
     return series.ewm(span=span, adjust=False).mean()
