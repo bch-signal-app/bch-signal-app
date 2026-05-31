@@ -118,19 +118,14 @@ def home():
 # =========================
 @app.route("/debug")
 def debug():
-
-    url = f"https://api.binance.com/api/v3/klines?symbol={SYMBOL}&interval=1h&limit=5"
+    url = "https://api.lbkex.com/v2/kline.do?symbol=bch_usdt&type=hour1&size=5"
 
     try:
-        response = requests.get(
-            url,
-            headers={"User-Agent": "Mozilla/5.0"},
-            timeout=15
-        )
+        r = requests.get(url, timeout=15)
 
         return jsonify({
-            "status_code": response.status_code,
-            "response": response.json()
+            "status_code": r.status_code,
+            "response": r.json()
         })
 
     except Exception as e:
