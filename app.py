@@ -1,6 +1,7 @@
 from flask import Flask, jsonify
 import requests
 import pandas as pd
+import os
 
 app = Flask(__name__)
 SYMBOL = "BCHUSDT"
@@ -46,11 +47,6 @@ def signal():
         "price": float(last["c"]),
         "rsi": float(last["rsi"])
     })
-
-if __name__ == "__main__":
-    app.run()
-
-import os
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))
