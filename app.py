@@ -49,8 +49,11 @@ def home():
 def signal():
     df = get_data()
 
-    if len(df) < 20:
-        return jsonify({"error": "not enough data"})
+    if df is None or len(df) < 20:
+        return jsonify({
+            "error": "not enough data",
+            "rows": int(len(df)) if df is not None else 0
+        })
 
     df["ema9"] = ema(df["c"], 9)
     df["ema20"] = ema(df["c"], 20)
