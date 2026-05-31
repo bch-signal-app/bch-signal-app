@@ -157,6 +157,8 @@ def signal():
         ema20_value = float(last["ema20"])
         rsi_value = float(last["rsi"])
 
+        last_time = int(last["time"])
+
         if ema9_value > ema20_value and rsi_value < 70:
             signal_value = "BUY"
 
