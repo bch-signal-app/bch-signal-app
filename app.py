@@ -118,20 +118,23 @@ def home():
 # =========================
 @app.route("/debug")
 def debug():
-    url = "https://api.lbkex.com/v2/kline.do?symbol=bch_usdt&type=hour1&size=5"
 
-    try:
-        r = requests.get(url, timeout=15)
+    urls = [
+        "https://api.lbkex.com/v2/kline.do?symbol=bch_usdt&type=1hour&size=5",
+        "https://api.lbkex.com/v2/kline.do?symbol=bch_usdt&type=hour1&size=5",
+        "https://api.lbkex.com/v2/kline.do?symbol=bch_usdt&type=60min&size=5"
+    ]
 
-        return jsonify({
-            "status_code": r.status_code,
-            "response": r.json()
-        })
+    results = {}
 
-    except Exception as e:
-        return jsonify({
-            "error": str(e)
-        })
+    for u in urls:
+        try:
+            r = requests.get(u, timeout=10)
+            results[u] = r.json()
+        except Exception as e:
+            results[u] = str(e)
+
+    return jsonify(results)
 
 
 # =========================
