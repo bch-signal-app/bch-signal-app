@@ -118,21 +118,21 @@ def home():
 # =========================
 @app.route("/debug")
 def debug():
-    url = "https://api.coingecko.com/api/v3/coins/bitcoin-cash/market_chart?vs_currency=usd&days=5"
+
+    url = "https://api.kucoin.com/api/v1/market/candles?type=1hour&symbol=BCH-USDT"
 
     try:
         r = requests.get(url, timeout=15)
 
         return jsonify({
             "status_code": r.status_code,
-            "keys": list(r.json().keys())
+            "response": r.json()
         })
 
     except Exception as e:
         return jsonify({
             "error": str(e)
         })
-
 # =========================
 # Signal Trading
 # =========================
