@@ -12,53 +12,45 @@ SYMBOL = "BCHUSDT"
 # Récupération données Binance
 # =========================
 def get_data():
-    url = f"https://api.binance.com/api/v3/klines?symbol={SYMBOL}&interval=1h&limit=100"
 
-    headers = {
-        "User-Agent": "Mozilla/5.0"
-    }
+    url = "https://api.kucoin.com/api/v1/market/candles?type=1hour&symbol=BCH-USDT"
 
     try:
-        response = requests.get(
-            url,
-            headers=headers,
-            timeout=15
-        )
-
-        print("Status Code:", response.status_code)
+        response = requests.get(url, timeout=15)
 
         if response.status_code != 200:
-            print("Response:", response.text)
+            print("HTTP Error:", response.status_code)
             return pd.DataFrame()
 
         data = response.json()
 
-        if not isinstance(data, list):
-            print("Unexpected Binance response:", data)
+        if data.get("code") != "200000":
+            print("KuCoin Error:", data)
             return pd.DataFrame()
 
-        df = pd.DataFrame(data)
+        candles = data.get("data", [])
 
-        if len(df) == 0:
-            print("Empty dataframe from Binance")
+        if len(candles) == 0:
             return pd.DataFrame()
 
-        df = df.iloc[:, [0, 1, 2, 3, 4, 5]]
-        df.columns = [
-            "time",
-            "open",
-            "high",
-            "low",
-            "close",
-            "volume"
-        ]
-
-        df["close"] = pd.to_numeric(
-            df["close"],
-            errors="coerce"
+        df = pd.DataFrame(
+            candles,
+            columns=[
+                "time",
+                "open",
+                "close",
+                "high",
+                "low",
+                "volume",
+                "turnover"
+            ]
         )
 
+        df["close"] = pd.to_numeric(df["close"], errors="coerce")
+
         df = df.dropna()
+
+        df = df.sort_values("time")
 
         print("Rows loaded:", len(df))
 
@@ -67,7 +59,6 @@ def get_data():
     except Exception as e:
         print("ERROR get_data():", str(e))
         return pd.DataFrame()
-
 
 # =========================
 # EMA
@@ -114,7 +105,7 @@ def home():
 
 
 # =========================
-# Debug Binance
+# Debug kucoin
 # =========================
 @app.route("/debug")
 def debug():
