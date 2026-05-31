@@ -118,24 +118,20 @@ def home():
 # =========================
 @app.route("/debug")
 def debug():
+    url = "https://api.coingecko.com/api/v3/coins/bitcoin-cash/market_chart?vs_currency=usd&days=5"
 
-    urls = [
-        "https://api.lbkex.com/v2/kline.do?symbol=bch_usdt&type=1hour&size=5",
-        "https://api.lbkex.com/v2/kline.do?symbol=bch_usdt&type=hour1&size=5",
-        "https://api.lbkex.com/v2/kline.do?symbol=bch_usdt&type=60min&size=5"
-    ]
+    try:
+        r = requests.get(url, timeout=15)
 
-    results = {}
+        return jsonify({
+            "status_code": r.status_code,
+            "keys": list(r.json().keys())
+        })
 
-    for u in urls:
-        try:
-            r = requests.get(u, timeout=10)
-            results[u] = r.json()
-        except Exception as e:
-            results[u] = str(e)
-
-    return jsonify(results)
-
+    except Exception as e:
+        return jsonify({
+            "error": str(e)
+        })
 
 # =========================
 # Signal Trading
