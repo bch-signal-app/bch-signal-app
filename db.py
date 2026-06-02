@@ -4,6 +4,9 @@ DB_FILE = "trading.duckdb"
 
 db = duckdb.connect(DB_FILE)
 
+# =========================
+# Table candles
+# =========================
 db.execute("""
 CREATE TABLE IF NOT EXISTS candles (
     timestamp BIGINT,
@@ -13,6 +16,9 @@ CREATE TABLE IF NOT EXISTS candles (
 )
 """)
 
+# =========================
+# Sauvegarde bougie
+# =========================
 def save_candle(timestamp, symbol, close):
 
     db.execute(
@@ -27,6 +33,9 @@ def save_candle(timestamp, symbol, close):
         ]
     )
 
+# =========================
+# Nombre de bougies
+# =========================
 def count_candles():
 
     result = db.execute(
@@ -37,3 +46,23 @@ def count_candles():
     ).fetchone()
 
     return result[0]
+
+# =========================
+# Dernières bougies
+# =========================
+def get_last_candles(limit=100):
+
+    rows = db.execute(
+        """
+        SELECT
+            timestamp,
+            symbol,
+            close
+        FROM candles
+        ORDER BY timestamp DESC
+        LIMIT ?
+        """,
+        [limit]
+    ).fetchall()
+
+    return rows
