@@ -14,11 +14,15 @@ SYMBOL = "BCHUSDT"
 # =========================
 # Récupération données KuCoin
 # =========================
+# =========================
+# Récupération données KuCoin
+# =========================
 def get_data():
 
     url = "https://api.kucoin.com/api/v1/market/candles?type=1hour&symbol=BCH-USDT"
 
     try:
+
         response = requests.get(url, timeout=15)
 
         if response.status_code != 200:
@@ -50,10 +54,18 @@ def get_data():
             ]
         )
 
-        df["close"] = pd.to_numeric(
-            df["close"],
-            errors="coerce"
-        )
+        # Conversion numérique
+        for col in [
+            "open",
+            "high",
+            "low",
+            "close",
+            "volume"
+        ]:
+            df[col] = pd.to_numeric(
+                df[col],
+                errors="coerce"
+            )
 
         df = df.dropna()
 
@@ -63,15 +75,15 @@ def get_data():
 
             last = df.iloc[-1]
 
-save_candle(
-    last["time"],
-    SYMBOL,
-    last["open"],
-    last["high"],
-    last["low"],
-    last["close"],
-    last["volume"]
-)
+            save_candle(
+                last["time"],
+                SYMBOL,
+                last["open"],
+                last["high"],
+                last["low"],
+                last["close"],
+                last["volume"]
+            )
 
         print("Rows loaded:", len(df))
 
@@ -82,8 +94,6 @@ save_candle(
         print("ERROR get_data():", str(e))
 
         return pd.DataFrame()
-
-
 # =========================
 # EMA
 # =========================
