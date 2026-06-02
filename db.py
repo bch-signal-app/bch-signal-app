@@ -11,7 +11,11 @@ db.execute("""
 CREATE TABLE IF NOT EXISTS candles (
     timestamp BIGINT,
     symbol VARCHAR,
+    open DOUBLE,
+    high DOUBLE,
+    low DOUBLE,
     close DOUBLE,
+    volume DOUBLE,
     PRIMARY KEY(timestamp, symbol)
 )
 """)
@@ -19,17 +23,28 @@ CREATE TABLE IF NOT EXISTS candles (
 # =========================
 # Sauvegarde bougie
 # =========================
-def save_candle(timestamp, symbol, close):
-
-    db.execute(
+   def save_candle(
+    timestamp,
+    symbol,
+    open_price,
+    high_price,
+    low_price,
+    close_price,
+    volume
+):
+db.execute(
         """
         INSERT OR IGNORE INTO candles
-        VALUES (?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
         """,
         [
             int(timestamp),
             symbol,
-            float(close)
+            float(open_price),
+            float(high_price),
+            float(low_price),
+            float(close_price),
+            float(volume)
         ]
     )
 
