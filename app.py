@@ -8,17 +8,25 @@ from db import count_candles
 from db import get_last_candles
 from db import set_setting
 from db import get_setting
+from backtest import run_backtest
 
 app = Flask(__name__)
 
 # =========================
-# Configuration
+# Configuration  
 # =========================
 SYMBOL = "BCHUSDT"
 
 TIMEFRAME = "1hour"
 
 HISTORY_SIZE = 100
+
+INITIAL_CAPITAL = 1000
+
+TAKE_PROFIT = 5      # %
+STOP_LOSS = 2        # %
+
+TRADING_FEE = 0.001  # 0.1%
 
 EMA_FAST = 9
 EMA_SLOW = 20
@@ -328,6 +336,25 @@ def history():
     return jsonify(data)
 
 # =========================
+# Backtest
+# =========================
+@app.route("/backtest")
+def backtest():
+
+    rows = get_last_candles(HISTORY_SIZE)
+
+    result = run_backtest(
+        rows,
+        ema,
+        EMA_FAST,
+        EMA_SLOW,
+        INITIAL_CAPITAL,
+        TRADING_FEE
+    )
+
+    return jsonify(result)
+
+# =========================
 # config
 # =========================
 @app.route("/config")
@@ -341,7 +368,7 @@ def config():
         "ema_slow": EMA_SLOW,
         "rsi_period": RSI_PERIOD
     })
-    
+
 # =========================
 # Render
 # =========================
@@ -428,5 +455,3 @@ def settings():
                 )
             )
     })
-
-
