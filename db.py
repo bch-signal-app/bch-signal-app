@@ -35,7 +35,7 @@ def save_candle(
 
     db.execute(
         """
-        INSERT OR IGNORE INTO candles
+        INSERT OR REPLACE INTO candles
         VALUES (?, ?, ?, ?, ?, ?, ?)
         """,
         [
