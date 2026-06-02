@@ -5,6 +5,7 @@ import os
 
 from db import save_candle
 from db import count_candles
+from db import get_last_candles
 
 app = Flask(__name__)
 
@@ -274,6 +275,25 @@ def stats():
 
 
 # =========================
+# History
+# ========================= 
+@app.route("/history")
+def history():
+
+    rows = get_last_candles(100)
+
+    data = []
+
+    for row in rows:
+
+        data.append({
+            "timestamp": row[0],
+            "symbol": row[1],
+            "close": row[2]
+        }) 
+    return jsonify(data)
+
+# =========================
 # Render
 # =========================
 if __name__ == "__main__":
@@ -289,3 +309,4 @@ if __name__ == "__main__":
         host="0.0.0.0",
         port=port
     )
+
