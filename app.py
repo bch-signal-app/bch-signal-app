@@ -326,6 +326,21 @@ def history():
     return jsonify(data)
 
 # =========================
+# config
+# =========================
+@app.route("/config")
+def config():
+
+    return jsonify({
+        "symbol": SYMBOL,
+        "timeframe": TIMEFRAME,
+        "history_size": HISTORY_SIZE,
+        "ema_fast": EMA_FAST,
+        "ema_slow": EMA_SLOW,
+        "rsi_period": RSI_PERIOD
+    })
+    
+# =========================
 # Render
 # =========================
 if __name__ == "__main__":
