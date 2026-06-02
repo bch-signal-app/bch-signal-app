@@ -49,6 +49,14 @@ def save_candle(
         ]
     )
 
+
+    db.execute("""
+        CREATE TABLE IF NOT EXISTS settings (
+            key VARCHAR PRIMARY KEY,
+            value VARCHAR
+        )    
+    """)
+    
 # =========================
 # Nombre de bougies
 # =========================
@@ -86,3 +94,35 @@ def get_last_candles(limit=100):
     ).fetchall()
 
     return rows
+
+
+# =========================
+# settings
+# =========================
+def set_setting(key, value):
+
+    db.execute(
+        """
+        INSERT OR REPLACE INTO settings
+        VALUES (?, ?)
+        """,
+        [key, str(value)]
+    )
+
+
+def get_setting(key, default_value):
+
+    result = db.execute(
+        """
+        SELECT value
+        FROM settings
+        WHERE key = ?
+        """,
+        [key]
+    ).fetchone()
+
+    if result:
+        return result[0]
+
+    return default_value
+
