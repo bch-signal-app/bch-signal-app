@@ -6,6 +6,8 @@ import os
 from db import save_candle
 from db import count_candles
 from db import get_last_candles
+from db import set_setting
+from db import get_setting
 
 app = Flask(__name__)
 
@@ -356,4 +358,75 @@ if __name__ == "__main__":
         host="0.0.0.0",
         port=port
     )
+# =========================
+# /settings
+# =========================    
+@app.route("/settings")
+def settings():
+
+    return jsonify({
+
+        "timeframe":
+            get_setting(
+                "timeframe",
+                "1hour"
+            ),
+
+        "history_size":
+            int(
+                get_setting(
+                    "history_size",
+                    100
+                )
+            ),
+
+        "ema_fast":
+            int(
+                get_setting(
+                    "ema_fast",
+                    9
+                )
+            ),
+
+        "ema_slow":
+            int(
+                get_setting(
+                    "ema_slow",
+                    20
+                )
+            ),
+
+        "rsi_period":
+            int(
+                get_setting(
+                    "rsi_period",
+                    14
+                )
+            ),
+
+        "take_profit":
+            float(
+                get_setting(
+                    "take_profit",
+                    0.05
+                )
+            ),
+
+        "stop_loss":
+            float(
+                get_setting(
+                    "stop_loss",
+                    0.02
+                )
+            ),
+
+        "initial_capital":
+            float(
+                get_setting(
+                    "initial_capital",
+                    1000
+                )
+            )
+    })
+
 
