@@ -303,8 +303,13 @@ def history():
         data.append({
             "timestamp": row[0],
             "symbol": row[1],
-            "close": row[2]
-        }) 
+            "open": row[2],
+            "high": row[3],
+            "low": row[4],
+            "close": row[5],
+            "volume": row[6]
+        })
+
     return jsonify(data)
 
 # =========================
