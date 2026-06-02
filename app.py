@@ -219,19 +219,19 @@ def signal():
     try:
 
         df["EMA_FAST"] = ema(
-    df["close"],
-    EMA_FAST
-)
+        df["close"],
+        EMA_FAST
+        )
 
-df["EMA_SLOW"] = ema(
-    df["close"],
-    EMA_SLOW
-)
+        df["EMA_SLOW"] = ema(
+        df["close"],
+        EMA_SLOW
+        )
 
-df["rsi"] = rsi(
-    df["close"],
-    RSI_PERIOD
-)
+        df["rsi"] = rsi(
+        df["close"],
+        RSI_PERIOD
+        )
 
         last = df.iloc[-1]
 
