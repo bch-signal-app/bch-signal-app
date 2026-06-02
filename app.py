@@ -63,11 +63,15 @@ def get_data():
 
             last = df.iloc[-1]
 
-            save_candle(
-                last["time"],
-                SYMBOL,
-                last["close"]
-            )
+save_candle(
+    last["time"],
+    SYMBOL,
+    last["open"],
+    last["high"],
+    last["low"],
+    last["close"],
+    last["volume"]
+)
 
         print("Rows loaded:", len(df))
 
