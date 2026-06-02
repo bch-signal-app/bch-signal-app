@@ -3,13 +3,15 @@ import requests
 import pandas as pd
 import os
 
+from db import save_candle
+from db import count_candles
+
 app = Flask(__name__)
 
 SYMBOL = "BCHUSDT"
 
-
 # =========================
-# Récupération données Binance
+# Récupération données KuCoin
 # =========================
 def get_data():
 
@@ -31,6 +33,7 @@ def get_data():
         candles = data.get("data", [])
 
         if len(candles) == 0:
+            print("No candles returned")
             return pd.DataFrame()
 
         df = pd.DataFrame(
@@ -46,24 +49,41 @@ def get_data():
             ]
         )
 
-        df["close"] = pd.to_numeric(df["close"], errors="coerce")
+        df["close"] = pd.to_numeric(
+            df["close"],
+            errors="coerce"
+        )
 
         df = df.dropna()
 
         df = df.sort_values("time")
+
+        if len(df) > 0:
+
+            last = df.iloc[-1]
+
+            save_candle(
+                last["time"],
+                SYMBOL,
+                last["close"]
+            )
 
         print("Rows loaded:", len(df))
 
         return df
 
     except Exception as e:
+
         print("ERROR get_data():", str(e))
+
         return pd.DataFrame()
+
 
 # =========================
 # EMA
 # =========================
 def ema(series, span):
+
     return series.ewm(
         span=span,
         adjust=False
@@ -74,6 +94,7 @@ def ema(series, span):
 # RSI
 # =========================
 def rsi(series, period=14):
+
     delta = series.diff()
 
     gain = delta.where(
@@ -81,10 +102,12 @@ def rsi(series, period=14):
         0
     ).rolling(period).mean()
 
-    loss = (-delta.where(
-        delta < 0,
-        0
-    )).rolling(period).mean()
+    loss = (
+        -delta.where(
+            delta < 0,
+            0
+        )
+    ).rolling(period).mean()
 
     rs = gain / loss.replace(0, 1)
 
@@ -98,6 +121,7 @@ def rsi(series, period=14):
 # =========================
 @app.route("/")
 def home():
+
     return jsonify({
         "status": "online",
         "pair": SYMBOL
@@ -105,7 +129,7 @@ def home():
 
 
 # =========================
-# Debug kucoin
+# Debug KuCoin
 # =========================
 @app.route("/debug")
 def debug():
@@ -113,6 +137,7 @@ def debug():
     url = "https://api.kucoin.com/api/v1/market/candles?type=1hour&symbol=BCH-USDT"
 
     try:
+
         r = requests.get(url, timeout=15)
 
         return jsonify({
@@ -121,9 +146,35 @@ def debug():
         })
 
     except Exception as e:
+
         return jsonify({
             "error": str(e)
         })
+
+
+# =========================
+# Prix actuel
+# =========================
+@app.route("/price")
+def price():
+
+    df = get_data()
+
+    if df.empty:
+
+        return jsonify({
+            "error": "no data"
+        })
+
+    last = df.iloc[-1]
+
+    return jsonify({
+        "pair": SYMBOL,
+        "price": round(float(last["close"]), 4),
+        "time": int(last["time"])
+    })
+
+
 # =========================
 # Signal Trading
 # =========================
@@ -133,13 +184,26 @@ def signal():
     df = get_data()
 
     if df.empty:
-        return jsonify({"error": "not enough data"})
+
+        return jsonify({
+            "error": "not enough data"
+        })
 
     try:
 
-        df["ema9"] = ema(df["close"], 9)
-        df["ema20"] = ema(df["close"], 20)
-        df["rsi"] = rsi(df["close"])
+        df["ema9"] = ema(
+            df["close"],
+            9
+        )
+
+        df["ema20"] = ema(
+            df["close"],
+            20
+        )
+
+        df["rsi"] = rsi(
+            df["close"]
+        )
 
         last = df.iloc[-1]
 
@@ -151,32 +215,76 @@ def signal():
         last_time = int(last["time"])
 
         if ema9_value > ema20_value and rsi_value < 70:
+
             signal_value = "BUY"
+
         elif ema9_value < ema20_value:
+
             signal_value = "SELL"
+
         else:
+
             signal_value = "HOLD"
 
         return jsonify({
+
             "pair": SYMBOL,
+
             "signal": signal_value,
+
             "price": round(price, 4),
-            "ema9": round(ema9_value, 4),
-            "ema20": round(ema20_value, 4),
-            "rsi": round(rsi_value, 2),
+
+            "ema9": round(
+                ema9_value,
+                4
+            ),
+
+            "ema20": round(
+                ema20_value,
+                4
+            ),
+
+            "rsi": round(
+                rsi_value,
+                2
+            ),
+
             "rows": len(df),
+
             "candle_time": last_time
+
         })
 
     except Exception as e:
+
         return jsonify({
             "error": str(e)
         })
+
+
+# =========================
+# Statistiques
+# =========================
+@app.route("/stats")
+def stats():
+
+    return jsonify({
+        "stored_candles": count_candles()
+    })
+
+
 # =========================
 # Render
 # =========================
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 10000))
+
+    port = int(
+        os.environ.get(
+            "PORT",
+            10000
+        )
+    )
+
     app.run(
         host="0.0.0.0",
         port=port
