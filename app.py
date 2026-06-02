@@ -14,9 +14,6 @@ SYMBOL = "BCHUSDT"
 # =========================
 # Récupération données KuCoin
 # =========================
-# =========================
-# Récupération données KuCoin
-# =========================
 def get_data():
 
     url = "https://api.kucoin.com/api/v1/market/candles?type=1hour&symbol=BCH-USDT"
