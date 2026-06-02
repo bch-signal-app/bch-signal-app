@@ -1,6 +1,6 @@
 import duckdb
 
-DB_FILE = "trading.duckdb"
+DB_FILE = "trading_v2.duckdb"
 
 db = duckdb.connect(DB_FILE)
 
