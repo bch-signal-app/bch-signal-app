@@ -86,18 +86,17 @@ def get_data():
 
         df = df.sort_values("time")
 
-for _, row in df.tail(HISTORY_SIZE).iterrows():
+        for _, row in df.tail(HISTORY_SIZE).iterrows():
 
-    save_candle(
-        row["time"],
-        SYMBOL,
-        row["open"],
-        row["high"],
-        row["low"],
-        row["close"],
-        row["volume"]
-    )
-
+            save_candle(
+                row["time"],
+                SYMBOL,
+                row["open"],
+                row["high"],
+                row["low"],
+                row["close"],
+                row["volume"]
+            )
         print("Rows loaded:", len(df))
 
         return df
