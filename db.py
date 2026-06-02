@@ -8,7 +8,8 @@ db.execute("""
 CREATE TABLE IF NOT EXISTS candles (
     timestamp BIGINT,
     symbol VARCHAR,
-    close DOUBLE
+    close DOUBLE,
+    PRIMARY KEY(timestamp, symbol)
 )
 """)
 
@@ -16,7 +17,7 @@ def save_candle(timestamp, symbol, close):
 
     db.execute(
         """
-        INSERT INTO candles
+        INSERT OR IGNORE INTO candles
         VALUES (?, ?, ?)
         """,
         [
