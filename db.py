@@ -23,7 +23,7 @@ CREATE TABLE IF NOT EXISTS candles (
 # =========================
 # Sauvegarde bougie
 # =========================
-   def save_candle(
+def save_candle(
     timestamp,
     symbol,
     open_price,
@@ -32,7 +32,8 @@ CREATE TABLE IF NOT EXISTS candles (
     close_price,
     volume
 ):
-db.execute(
+
+    db.execute(
         """
         INSERT OR IGNORE INTO candles
         VALUES (?, ?, ?, ?, ?, ?, ?)
@@ -72,7 +73,11 @@ def get_last_candles(limit=100):
         SELECT
             timestamp,
             symbol,
-            close
+            open,
+            high,
+            low,
+            close,
+            volume
         FROM candles
         ORDER BY timestamp DESC
         LIMIT ?
