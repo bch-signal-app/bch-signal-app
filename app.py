@@ -9,14 +9,30 @@ from db import get_last_candles
 
 app = Flask(__name__)
 
+# =========================
+# Configuration
+# =========================
 SYMBOL = "BCHUSDT"
+
+TIMEFRAME = "1hour"
+
+HISTORY_SIZE = 100
+
+EMA_FAST = 9
+EMA_SLOW = 20
+
+RSI_PERIOD = 14
 
 # =========================
 # Récupération données KuCoin
 # =========================
 def get_data():
 
-    url = "https://api.kucoin.com/api/v1/market/candles?type=1hour&symbol=BCH-USDT"
+    url = (
+    f"https://api.kucoin.com/api/v1/market/candles"
+    f"?type={TIMEFRAME}"
+    f"&symbol=BCH-USDT"
+)
 
     try:
 
@@ -38,6 +54,8 @@ def get_data():
             print("No candles returned")
             return pd.DataFrame()
 
+        candles = candles[:HISTORY_SIZE]
+        
         df = pd.DataFrame(
             candles,
             columns=[
@@ -68,19 +86,17 @@ def get_data():
 
         df = df.sort_values("time")
 
-        if len(df) > 0:
+for _, row in df.tail(HISTORY_SIZE).iterrows():
 
-            last = df.iloc[-1]
-
-            save_candle(
-                last["time"],
-                SYMBOL,
-                last["open"],
-                last["high"],
-                last["low"],
-                last["close"],
-                last["volume"]
-            )
+    save_candle(
+        row["time"],
+        SYMBOL,
+        row["open"],
+        row["high"],
+        row["low"],
+        row["close"],
+        row["volume"]
+    )
 
         print("Rows loaded:", len(df))
 
@@ -105,7 +121,7 @@ def ema(series, span):
 # =========================
 # RSI
 # =========================
-def rsi(series, period=14):
+def rsi(series, period=RSI_PERIOD):
 
     delta = series.diff()
 
@@ -203,34 +219,35 @@ def signal():
 
     try:
 
-        df["ema9"] = ema(
-            df["close"],
-            9
-        )
+        df["EMA_FAST"] = ema(
+    df["close"],
+    EMA_FAST
+)
 
-        df["ema20"] = ema(
-            df["close"],
-            20
-        )
+df["EMA_SLOW"] = ema(
+    df["close"],
+    EMA_SLOW
+)
 
-        df["rsi"] = rsi(
-            df["close"]
-        )
+df["rsi"] = rsi(
+    df["close"],
+    RSI_PERIOD
+)
 
         last = df.iloc[-1]
 
         price = float(last["close"])
-        ema9_value = float(last["ema9"])
-        ema20_value = float(last["ema20"])
+        ema_fast_value = float(last["EMA_FAST"])
+        ema_slow_value = float(last["EMA_SLOW"])
         rsi_value = float(last["rsi"])
 
         last_time = int(last["time"])
 
-        if ema9_value > ema20_value and rsi_value < 70:
+        if ema_fast_value > ema_slow_value and rsi_value < 70:
 
             signal_value = "BUY"
 
-        elif ema9_value < ema20_value:
+        elif ema_fast_value < ema_slow_value:
 
             signal_value = "SELL"
 
@@ -246,13 +263,13 @@ def signal():
 
             "price": round(price, 4),
 
-            "ema9": round(
-                ema9_value,
+            "EMA_FAST": round(
+                ema_fast_value,
                 4
             ),
 
-            "ema20": round(
-                ema20_value,
+            "EMA_SLOW": round(
+                ema_slow_value,
                 4
             ),
 
@@ -291,7 +308,7 @@ def stats():
 @app.route("/history")
 def history():
 
-    rows = get_last_candles(100)
+    rows = get_last_candles(HISTORY_SIZE)
 
     data = []
 
