@@ -93,6 +93,7 @@ def get_last_candles(limit=100):
         [limit]
     ).fetchall()
 
+    print("ROWS =", len(rows))
     return rows
 
 

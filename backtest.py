@@ -3,8 +3,10 @@ import pandas as pd
 def run_backtest(
     rows,
     ema,
+    rsi,
     EMA_FAST,
     EMA_SLOW,
+    RSI_PERIOD,
     INITIAL_CAPITAL,
     TRADING_FEE,
     STOP_LOSS,
@@ -42,6 +44,11 @@ def run_backtest(
         EMA_SLOW
     )
 
+    df["rsi"] = rsi(
+    df["close"],
+    RSI_PERIOD
+    )
+
     capital = INITIAL_CAPITAL
     position = 0.0
 
@@ -50,6 +57,9 @@ def run_backtest(
 
     entry_price = None
     current_trade = None
+
+    wins = 0
+    losses = 0
 
     for i in range(1, len(df)):
 
@@ -62,26 +72,40 @@ def run_backtest(
         price = float(df.iloc[i]["close"])
         timestamp = int(df.iloc[i]["time"])
 
+        rsi_value = float(df.iloc[i]["rsi"])
+
         stop_loss_triggered = False
         take_profit_triggered = False
 
+        high_price = float(df.iloc[i]["high"])
+        low_price = float(df.iloc[i]["low"])
+
         if position > 0:
 
-            change_pct = (
-                (price - entry_price)
-                / entry_price
-            ) * 100
+            stop_price = (
+                entry_price
+                * (1 - STOP_LOSS / 100)
+            )
 
-            if change_pct <= -STOP_LOSS:
+            take_profit_price = (
+                entry_price
+                * (1 + TAKE_PROFIT / 100)
+            )
+
+            if low_price <= stop_price:
                 stop_loss_triggered = True
+                price = stop_price
 
-            if change_pct >= TAKE_PROFIT:
+            elif high_price >= take_profit_price:
                 take_profit_triggered = True
+                price = take_profit_price
 
         buy_signal = (
             prev_fast <= prev_slow
             and
             curr_fast > curr_slow
+            and
+            rsi_value > 55
         )
 
         sell_signal = (
@@ -107,7 +131,7 @@ def run_backtest(
                 "buy_time": timestamp,
                 "buy_price": round(price, 4),
                 "capital_before": round(capital, 2),
-                "quantity": round(quantity, 8)
+                "quantity": round(quantity, 8),
             }
 
             capital = 0
@@ -134,6 +158,11 @@ def run_backtest(
                 profit
                 / current_trade["capital_before"]
             ) * 100
+
+            if profit > 0:
+                wins += 1
+            else:
+                losses += 1
 
             current_trade.update({
 
@@ -209,7 +238,18 @@ def run_backtest(
         "trades_count":
             len(trades),
 
+        "wins":
+            wins,
+
+        "losses":
+            losses,
+
+        "win_rate":
+            round(
+                wins / len(trades) * 100,
+                2
+            ) if len(trades) > 0 else 0,
+
         "trades":
             trades
-
     }

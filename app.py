@@ -2,6 +2,7 @@ from flask import Flask, jsonify
 import requests
 import pandas as pd
 import os
+import time
 
 from db import save_candle
 from db import count_candles
@@ -25,7 +26,7 @@ HISTORY_SIZE = 1000
 INITIAL_CAPITAL = 1000
 
 STOP_LOSS = 1.0
-TAKE_PROFIT = 1.0
+TAKE_PROFIT = 2.0
 
 TRADING_FEE = 0.001  # 0.1%
 
@@ -39,11 +40,27 @@ RSI_PERIOD = 14
 # =========================
 def get_data():
 
+    
+    end_at = int(time.time())
+
+    start_at = end_at - (1000 * 3600)
+
     url = (
-    f"https://api.kucoin.com/api/v1/market/candles"
-    f"?type={TIMEFRAME}"
-    f"&symbol=BCH-USDT"
-)
+        f"https://api.kucoin.com/api/v1/market/candles"
+        f"?type={TIMEFRAME}"
+        f"&symbol=BCH-USDT"
+        f"&startAt={start_at}"
+        f"&endAt={end_at}"
+    )
+
+    print(url)
+    
+    
+#     url = (
+#     f"https://api.kucoin.com/api/v1/market/candles"
+#     f"?type={TIMEFRAME}"
+#     f"&symbol=BCH-USDT"
+# )
 
     try:
 
@@ -380,8 +397,10 @@ def backtest():
     result = run_backtest(
     rows,
     ema,
+    rsi,
     EMA_FAST,
     EMA_SLOW,
+    RSI_PERIOD,
     INITIAL_CAPITAL,
     TRADING_FEE,
     STOP_LOSS,
