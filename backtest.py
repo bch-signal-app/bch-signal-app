@@ -6,6 +6,7 @@ def run_backtest(
     rsi,
     EMA_FAST,
     EMA_SLOW,
+    EMA_TREND,
     RSI_PERIOD,
     INITIAL_CAPITAL,
     TRADING_FEE,
@@ -44,6 +45,11 @@ def run_backtest(
         EMA_SLOW
     )
 
+    df["ema_trend"] = ema(
+    df["close"],
+    EMA_TREND
+    )
+    
     df["rsi"] = rsi(
     df["close"],
     RSI_PERIOD
@@ -73,6 +79,7 @@ def run_backtest(
         timestamp = int(df.iloc[i]["time"])
 
         rsi_value = float(df.iloc[i]["rsi"])
+        trend_value = float(df.iloc[i]["ema_trend"])
 
         stop_loss_triggered = False
         take_profit_triggered = False
@@ -106,6 +113,7 @@ def run_backtest(
             curr_fast > curr_slow
             and
             rsi_value > 55
+            and price > trend_value
         )
 
         sell_signal = (

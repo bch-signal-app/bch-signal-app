@@ -56,7 +56,123 @@ def save_candle(
             value VARCHAR
         )    
     """)
-    
+
+# =========================
+# Table strategies
+# =========================
+db.execute("""
+CREATE TABLE IF NOT EXISTS strategies (
+    id BIGINT PRIMARY KEY,
+    name VARCHAR,
+
+    ema_fast INTEGER,
+    ema_slow INTEGER,
+    ema_trend INTEGER,
+
+    rsi_period INTEGER,
+    rsi_min INTEGER,
+
+    stop_loss DOUBLE,
+    take_profit DOUBLE,
+
+    initial_capital DOUBLE
+)
+""")
+
+def create_strategy(
+    name,
+    ema_fast,
+    ema_slow,
+    ema_trend,
+    rsi_period,
+    rsi_min,
+    stop_loss,
+    take_profit,
+    initial_capital
+):
+    next_id = db.execute(
+        """
+        SELECT COALESCE(MAX(id), 0) + 1
+        FROM strategies
+        """
+    ).fetchone()[0]
+
+    db.execute(
+        """
+        INSERT INTO strategies
+        (
+            id,
+            name,
+            ema_fast,
+            ema_slow,
+            ema_trend,
+            rsi_period,
+            rsi_min,
+            stop_loss,
+            take_profit,
+            initial_capital
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """,
+        [
+            next_id,
+            name,
+            ema_fast,
+            ema_slow,
+            ema_trend,
+            rsi_period,
+            rsi_min,
+            stop_loss,
+            take_profit,
+            initial_capital
+        ]
+    )
+
+def get_strategies():
+
+    return db.execute(
+        """
+        SELECT *
+        FROM strategies
+        ORDER BY id
+        """
+    ).fetchall()
+
+def get_strategy(strategy_id):
+
+    return db.execute(
+        """
+        SELECT *
+        FROM strategies
+        WHERE id = ?
+        """,
+        [strategy_id]
+    ).fetchone()
+
+
+def create_default_strategy():
+
+    exists = db.execute(
+        """
+        SELECT COUNT(*)
+        FROM strategies
+        """
+    ).fetchone()[0]
+
+    if exists == 0:
+
+        create_strategy(
+            "Default",
+            9,
+            20,
+            50,
+            14,
+            55,
+            1.0,
+            2.0,
+            1000
+        )
+
 # =========================
 # Nombre de bougies
 # =========================

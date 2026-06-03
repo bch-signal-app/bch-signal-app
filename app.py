@@ -11,6 +11,10 @@ from db import set_setting
 from db import get_setting
 from backtest import run_backtest
 from db import db
+from db import create_default_strategy
+from db import get_strategies
+from db import get_strategy
+
 
 app = Flask(__name__)
 
@@ -34,6 +38,7 @@ EMA_FAST = 9
 EMA_SLOW = 20
 
 RSI_PERIOD = 14
+EMA_TREND = 50
 
 # =========================
 # Récupération données KuCoin
@@ -387,6 +392,56 @@ def history():
     return jsonify(data)
 
 # =========================
+# strategies
+# =========================
+@app.route("/strategies")
+def strategies():
+
+    rows = get_strategies()
+
+    data = []
+
+    for row in rows:
+
+        data.append({
+            "id": row[0],
+            "name": row[1]
+        })
+
+    return jsonify(data)
+
+# =========================
+# strategy
+# =========================
+@app.route("/strategy/<int:strategy_id>")
+def strategy(strategy_id):
+
+    row = get_strategy(strategy_id)
+
+    if not row:
+        return jsonify({
+            "error": "strategy not found"
+        })
+
+    return jsonify({
+
+        "id": row[0],
+        "name": row[1],
+
+        "ema_fast": row[2],
+        "ema_slow": row[3],
+        "ema_trend": row[4],
+
+        "rsi_period": row[5],
+        "rsi_min": row[6],
+
+        "stop_loss": row[7],
+        "take_profit": row[8],
+
+        "initial_capital": row[9]
+    })
+
+# =========================
 # Backtest
 # =========================
 @app.route("/backtest")
@@ -400,6 +455,7 @@ def backtest():
     rsi,
     EMA_FAST,
     EMA_SLOW,
+    EMA_TREND,
     RSI_PERIOD,
     INITIAL_CAPITAL,
     TRADING_FEE,
@@ -423,6 +479,13 @@ def config():
         "ema_slow": EMA_SLOW,
         "rsi_period": RSI_PERIOD
     })
+
+
+
+# =========================
+# Créer Une seule fois 
+# =========================
+create_default_strategy()
 
 # =========================
 # Render
