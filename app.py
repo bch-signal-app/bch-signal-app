@@ -9,6 +9,7 @@ from db import get_last_candles
 from db import set_setting
 from db import get_setting
 from backtest import run_backtest
+from db import db
 
 app = Flask(__name__)
 
@@ -19,12 +20,12 @@ SYMBOL = "BCHUSDT"
 
 TIMEFRAME = "1hour"
 
-HISTORY_SIZE = 100
+HISTORY_SIZE = 1000
 
 INITIAL_CAPITAL = 1000
 
-TAKE_PROFIT = 5      # %
-STOP_LOSS = 2        # %
+STOP_LOSS = 1.0
+TAKE_PROFIT = 1.0
 
 TRADING_FEE = 0.001  # 0.1%
 
@@ -59,6 +60,7 @@ def get_data():
             return pd.DataFrame()
 
         candles = data.get("data", [])
+        print("KuCoin returned:", len(candles))
 
         if len(candles) == 0:
             print("No candles returned")
@@ -211,6 +213,38 @@ def price():
         "time": int(last["time"])
     })
 
+# =========================
+# refresh
+# =========================
+@app.route("/refresh")
+def refresh():
+
+    df = get_data()
+
+    return {
+        "loaded": len(df),
+        "stored_candles": count_candles()
+    }
+
+# =========================
+# dbinfo
+# =========================
+@app.route("/dbinfo")
+def dbinfo():
+
+    result = db.execute("""
+        SELECT
+            MIN(timestamp),
+            MAX(timestamp),
+            COUNT(*)
+        FROM candles
+    """).fetchone()
+
+    return {
+        "min_timestamp": result[0],
+        "max_timestamp": result[1],
+        "count": result[2]
+    }
 
 # =========================
 # Signal Trading
@@ -344,12 +378,14 @@ def backtest():
     rows = get_last_candles(HISTORY_SIZE)
 
     result = run_backtest(
-        rows,
-        ema,
-        EMA_FAST,
-        EMA_SLOW,
-        INITIAL_CAPITAL,
-        TRADING_FEE
+    rows,
+    ema,
+    EMA_FAST,
+    EMA_SLOW,
+    INITIAL_CAPITAL,
+    TRADING_FEE,
+    STOP_LOSS,
+    TAKE_PROFIT
     )
 
     return jsonify(result)

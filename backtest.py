@@ -6,7 +6,9 @@ def run_backtest(
     EMA_FAST,
     EMA_SLOW,
     INITIAL_CAPITAL,
-    TRADING_FEE
+    TRADING_FEE,
+    STOP_LOSS,
+    TAKE_PROFIT
 ):
     
 
@@ -46,6 +48,7 @@ def run_backtest(
     trade_number = 0
     trades = []
 
+    entry_price = None
     current_trade = None
 
     for i in range(1, len(df)):
@@ -58,6 +61,22 @@ def run_backtest(
 
         price = float(df.iloc[i]["close"])
         timestamp = int(df.iloc[i]["time"])
+
+        stop_loss_triggered = False
+        take_profit_triggered = False
+
+        if position > 0:
+
+            change_pct = (
+                (price - entry_price)
+                / entry_price
+            ) * 100
+
+            if change_pct <= -STOP_LOSS:
+                stop_loss_triggered = True
+
+            if change_pct >= TAKE_PROFIT:
+                take_profit_triggered = True
 
         buy_signal = (
             prev_fast <= prev_slow
@@ -81,6 +100,7 @@ def run_backtest(
             position = quantity
 
             trade_number += 1
+            entry_price = price
 
             current_trade = {
                 "trade": trade_number,
@@ -93,7 +113,11 @@ def run_backtest(
             capital = 0
 
         # SELL
-        elif sell_signal and position > 0:
+        elif (
+            sell_signal
+            or stop_loss_triggered
+            or take_profit_triggered
+        ) and position > 0:
 
             capital = (
                 position
@@ -112,6 +136,17 @@ def run_backtest(
             ) * 100
 
             current_trade.update({
+
+                "exit_reason":
+                    (
+                        "STOP_LOSS"
+                        if stop_loss_triggered
+                        else
+                        "TAKE_PROFIT"
+                        if take_profit_triggered
+                        else
+                        "EMA_SELL"
+                    ),
 
                 "sell_time": timestamp,
 
