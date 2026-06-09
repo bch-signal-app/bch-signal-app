@@ -243,3 +243,55 @@ def get_setting(key, default_value):
 
     return default_value
 
+def clone_strategy(strategy_id):
+
+    row = get_strategy(strategy_id)
+
+    if not row:
+        return None
+
+    cursor = db.execute(
+        """
+        INSERT INTO strategies (
+            name,
+            ema_fast,
+            ema_slow,
+            ema_trend,
+            rsi_period,
+            rsi_min,
+            stop_loss,
+            take_profit,
+            initial_capital
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """,
+        (
+            row[1] + " Copy",
+            row[2],
+            row[3],
+            row[4],
+            row[5],
+            row[6],
+            row[7],
+            row[8],
+            row[9]
+        )
+    )
+
+    db.commit()
+
+    return cursor.lastrowid
+
+def delete_strategy(strategy_id):
+
+    db.execute(
+        """
+        DELETE FROM strategies
+        WHERE id = ?
+        """,
+        (strategy_id,)
+    )
+
+    db.commit()
+
+    

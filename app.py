@@ -14,6 +14,8 @@ from db import db
 from db import create_default_strategy
 from db import get_strategies
 from db import get_strategy
+from db import clone_strategy
+from db import delete_strategy
 
 
 app = Flask(__name__)
@@ -25,14 +27,14 @@ SYMBOL = "BCHUSDT"
 
 TIMEFRAME = "1hour"
 
-HISTORY_SIZE = 1000
+APP_HISTORY_SIZE = 1000
 
 INITIAL_CAPITAL = 1000
 
 STOP_LOSS = 1.0
 TAKE_PROFIT = 2.0
 
-TRADING_FEE = 0.001  # 0.1%
+APP_TRADING_FEE = 0.001  # 0.1%
 
 EMA_FAST = 9
 EMA_SLOW = 20
@@ -88,7 +90,7 @@ def get_data():
             print("No candles returned")
             return pd.DataFrame()
 
-        candles = candles[:HISTORY_SIZE]
+        candles = candles[:APP_HISTORY_SIZE]
         
         df = pd.DataFrame(
             candles,
@@ -120,7 +122,7 @@ def get_data():
 
         df = df.sort_values("time")
 
-        for _, row in df.tail(HISTORY_SIZE).iterrows():
+        for _, row in df.tail(APP_HISTORY_SIZE).iterrows():
 
             save_candle(
                 row["time"],
@@ -382,7 +384,7 @@ def stats():
 @app.route("/history")
 def history():
 
-    rows = get_last_candles(HISTORY_SIZE)
+    rows = get_last_candles(APP_HISTORY_SIZE)
 
     data = []
 
@@ -456,7 +458,7 @@ def strategy(strategy_id):
 @app.route("/backtest")
 def backtest():
 
-    rows = get_last_candles(HISTORY_SIZE)
+    rows = get_last_candles(APP_HISTORY_SIZE)
 
     result = run_backtest(
     rows,
@@ -467,7 +469,7 @@ def backtest():
     EMA_TREND,
     RSI_PERIOD,
     INITIAL_CAPITAL,
-    TRADING_FEE,
+    APP_TRADING_FEE,
     STOP_LOSS,
     TAKE_PROFIT
     )
@@ -483,7 +485,7 @@ def config():
     return jsonify({
         "symbol": SYMBOL,
         "timeframe": TIMEFRAME,
-        "history_size": HISTORY_SIZE,
+        "history_size": APP_HISTORY_SIZE,
         "ema_fast": EMA_FAST,
         "ema_slow": EMA_SLOW,
         "rsi_period": RSI_PERIOD
@@ -558,6 +560,197 @@ def settings():
                     1000
                 )
             )
+    })
+
+
+# =========================
+# active-strategy 
+# =========================
+
+@app.route("/active-strategy")
+def active_strategy():
+    strategy_id = int(
+        get_setting("active_strategy_id", 1)
+    )
+
+    row = get_strategy(strategy_id)
+
+    if not row:
+        return jsonify({
+            "error": "strategy not found"
+        })
+
+    return jsonify({
+        "id": row[0],
+        "name": row[1],
+        "ema_fast": row[2],
+        "ema_slow": row[3],
+        "ema_trend": row[4],
+        "rsi_period": row[5],
+        "rsi_min": row[6],
+        "stop_loss": row[7],
+        "take_profit": row[8],
+        "initial_capital": row[9]
+    })
+
+# =========================
+# set active-strategy
+# =========================
+@app.route("/active-strategy/<int:strategy_id>")
+def set_active_strategy(strategy_id):
+
+    row = get_strategy(strategy_id)
+
+    if not row:
+        return jsonify({
+            "error": "strategy not found"
+        })
+
+    set_setting(
+        "active_strategy_id",
+        strategy_id
+    )
+
+    return jsonify({
+        "success": True,
+        "active_strategy_id": strategy_id
+    })
+
+# =========================
+# clone strategy
+# =========================
+@app.route(
+    "/strategy/<int:strategy_id>/clone",
+    methods=["POST"]
+)
+def clone_strategy_route(strategy_id):
+
+    new_id = clone_strategy(strategy_id)
+
+    if not new_id:
+        return jsonify({
+            "error": "strategy not found"
+        })
+
+    return jsonify({
+        "success": True,
+        "new_strategy_id": new_id
+    })
+
+# =========================
+# delete  strategy
+# =========================
+@app.route(
+    "/strategy/<int:strategy_id>/delete"
+)
+def delete_strategy_route(strategy_id):
+
+    delete_strategy(strategy_id)
+
+    return jsonify({
+        "success": True
+    })
+
+# =========================
+# backtest strategy
+# =========================
+@app.route("/backtest/<int:strategy_id>")
+def backtest_strategy(strategy_id):
+
+    row = get_strategy(strategy_id)
+
+    if not row:
+        return jsonify({
+            "error": "strategy not found"
+        })
+
+    rows = get_last_candles(APP_HISTORY_SIZE)
+
+    result = run_backtest(
+        rows,
+        ema,
+        rsi,
+
+        row[2],  # EMA_FAST
+        row[3],  # EMA_SLOW
+        row[4],  # EMA_TREND
+
+        row[5],  # RSI_PERIOD
+
+        row[9],  # INITIAL_CAPITAL
+
+        APP_TRADING_FEE,
+
+        row[7],  # STOP_LOSS
+        row[8]   # TAKE_PROFIT
+    )
+
+    result["strategy_id"] = strategy_id
+    result["strategy_name"] = row[1]
+
+    return jsonify(result)
+
+# =========================
+# compare backtests
+# =========================
+
+@app.route("/backtest/compare")
+def compare_backtests():
+
+    rows = get_last_candles(APP_HISTORY_SIZE)
+
+    strategies = get_strategies()
+
+    results = []
+
+    for row in strategies:
+
+        result = run_backtest(
+            rows,
+            ema,
+            rsi,
+
+            row[2],
+            row[3],
+            row[4],
+
+            row[5],
+
+            row[9],
+
+            APP_TRADING_FEE,
+
+            row[7],
+            row[8]
+        )
+
+        results.append({
+
+            "id": row[0],
+            "name": row[1],
+
+            "profit_pct": result["profit_pct"],
+            "profit": result["profit"],
+
+            "capital_end": result["capital_end"],
+
+            "trades_count": result["trades_count"],
+
+            "wins": result["wins"],
+            "losses": result["losses"],
+
+            "win_rate": result["win_rate"]
+        })
+
+    results = sorted(
+        results,
+        key=lambda x: x["profit_pct"],
+        reverse=True
+    )
+
+    return jsonify({
+        "best_strategy": results[0] if results else None,
+        "strategies": results
     })
 
 # =========================
