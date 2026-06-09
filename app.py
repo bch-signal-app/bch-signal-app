@@ -480,29 +480,6 @@ def config():
         "rsi_period": RSI_PERIOD
     })
 
-
-
-# =========================
-# Créer Une seule fois 
-# =========================
-create_default_strategy()
-
-# =========================
-# Render
-# =========================
-if __name__ == "__main__":
-
-    port = int(
-        os.environ.get(
-            "PORT",
-            10000
-        )
-    )
-
-    app.run(
-        host="0.0.0.0",
-        port=port
-    )
 # =========================
 # /settings
 # =========================    
@@ -573,3 +550,25 @@ def settings():
                 )
             )
     })
+
+# =========================
+# Créer Une seule fois 
+# =========================
+create_default_strategy()
+
+# =========================
+# Render
+# =========================
+if __name__ == "__main__":
+
+    port = int(
+        os.environ.get(
+            "PORT",
+            10000
+        )
+    )
+
+    app.run(
+        host="0.0.0.0",
+        port=port
+    )
