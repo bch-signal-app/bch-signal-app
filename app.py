@@ -190,6 +190,15 @@ def home():
 
 
 # =========================
+# version
+# =========================
+@app.route("/version")
+def version():
+    return {
+        "version": "2026-06-09"
+    }
+
+# =========================
 # Debug KuCoin
 # =========================
 @app.route("/debug")
