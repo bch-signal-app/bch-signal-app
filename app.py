@@ -1,4 +1,4 @@
-from flask import Flask, jsonify
+from flask import Flask, jsonify, render_template
 from flask_cors import CORS
 import requests
 import pandas as pd
@@ -17,6 +17,7 @@ from db import get_strategies
 from db import get_strategy
 from db import clone_strategy
 from db import delete_strategy
+
 
 
 app = Flask(__name__)
@@ -757,6 +758,13 @@ def compare_backtests():
 # Créer Une seule fois 
 # =========================
 create_default_strategy()
+
+# =========================
+# dashboard
+# =========================
+@app.route("/dashboard")
+def dashboard():
+    return render_template("dashboard.html")
 
 # =========================
 # Render
