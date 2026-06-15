@@ -303,4 +303,36 @@ def delete_strategy(strategy_id):
 
     db.commit()
 
+def update_strategy(strategy_id, name, ema_fast, ema_slow, ema_trend,
+                    rsi_period, rsi_min, stop_loss, take_profit, initial_capital):
+    db.execute(
+        """
+        UPDATE strategies
+        SET name = ?,
+            ema_fast = ?,
+            ema_slow = ?,
+            ema_trend = ?,
+            rsi_period = ?,
+            rsi_min = ?,
+            stop_loss = ?,
+            take_profit = ?,
+            initial_capital = ?
+        WHERE id = ?
+        """,
+        [
+            name,
+            int(ema_fast),
+            int(ema_slow),
+            int(ema_trend),
+            int(rsi_period),
+            int(rsi_min),
+            float(stop_loss),
+            float(take_profit),
+            float(initial_capital),
+            int(strategy_id)
+        ]
+    )
+
+    db.commit()
     
+        

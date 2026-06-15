@@ -1,4 +1,4 @@
-from flask import Flask, jsonify, render_template
+from flask import Flask, jsonify, render_template, request
 from flask_cors import CORS
 import requests
 import pandas as pd
@@ -17,6 +17,7 @@ from db import get_strategies
 from db import get_strategy
 from db import clone_strategy
 from db import delete_strategy
+from db import update_strategy
 
 
 
@@ -661,6 +662,44 @@ def delete_strategy_route(strategy_id):
 
     return jsonify({
         "success": True
+    })
+
+# =========================
+# delete update_strategy_route
+# =========================
+@app.route("/strategy/<int:strategy_id>/update", methods=["PUT"])
+def update_strategy_route(strategy_id):
+
+    row = get_strategy(strategy_id)
+
+    if not row:
+        return jsonify({
+            "error": "strategy not found"
+        })
+
+    data = request.get_json()
+
+    if not data:
+        return jsonify({
+            "error": "no data provided"
+        })
+
+    update_strategy(
+        strategy_id,
+        data.get("name", row[1]),
+        data.get("ema_fast", row[2]),
+        data.get("ema_slow", row[3]),
+        data.get("ema_trend", row[4]),
+        data.get("rsi_period", row[5]),
+        data.get("rsi_min", row[6]),
+        data.get("stop_loss", row[7]),
+        data.get("take_profit", row[8]),
+        data.get("initial_capital", row[9])
+    )
+
+    return jsonify({
+        "success": True,
+        "strategy_id": strategy_id
     })
 
 # =========================
