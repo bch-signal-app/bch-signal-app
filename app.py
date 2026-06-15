@@ -1,4 +1,5 @@
 from flask import Flask, jsonify
+from flask_cors import CORS
 import requests
 import pandas as pd
 import os
@@ -19,6 +20,8 @@ from db import delete_strategy
 
 
 app = Flask(__name__)
+
+CORS(app)
 
 # =========================
 # Configuration  
@@ -487,21 +490,6 @@ def backtest():
     )
 
     return jsonify(result)
-
-# =========================
-# config
-# =========================
-@app.route("/config")
-def config():
-
-    return jsonify({
-        "symbol": APP_SYMBOL,
-        "timeframe": APP_TIMEFRAME,
-        "history_size": APP_HISTORY_SIZE,
-        "ema_fast": EMA_FAST,
-        "ema_slow": EMA_SLOW,
-        "rsi_period": RSI_PERIOD
-    })
 
 # =========================
 # /settings
