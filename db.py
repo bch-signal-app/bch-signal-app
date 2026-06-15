@@ -21,18 +21,40 @@ CREATE TABLE IF NOT EXISTS candles (
 """)
 
 # =========================
+# Table settings
+# =========================
+db.execute("""
+CREATE TABLE IF NOT EXISTS settings (
+    key VARCHAR PRIMARY KEY,
+    value VARCHAR
+)
+""")
+
+# =========================
+# Table strategies
+# =========================
+db.execute("""
+CREATE TABLE IF NOT EXISTS strategies (
+    id BIGINT PRIMARY KEY,
+    name VARCHAR,
+    ema_fast INTEGER,
+    ema_slow INTEGER,
+    ema_trend INTEGER,
+    rsi_period INTEGER,
+    rsi_min INTEGER,
+    stop_loss DOUBLE,
+    take_profit DOUBLE,
+    initial_capital DOUBLE
+)
+""")
+
+db.commit()
+
+
+# =========================
 # Sauvegarde bougie
 # =========================
-def save_candle(
-    timestamp,
-    symbol,
-    open_price,
-    high_price,
-    low_price,
-    close_price,
-    volume
-):
-
+def save_candle(timestamp, symbol, open_price, high_price, low_price, close_price, volume):
     db.execute(
         """
         INSERT OR REPLACE INTO candles
@@ -50,46 +72,7 @@ def save_candle(
     )
 
 
-    db.execute("""
-        CREATE TABLE IF NOT EXISTS settings (
-            key VARCHAR PRIMARY KEY,
-            value VARCHAR
-        )    
-    """)
-
-# =========================
-# Table strategies
-# =========================
-db.execute("""
-CREATE TABLE IF NOT EXISTS strategies (
-    id BIGINT PRIMARY KEY,
-    name VARCHAR,
-
-    ema_fast INTEGER,
-    ema_slow INTEGER,
-    ema_trend INTEGER,
-
-    rsi_period INTEGER,
-    rsi_min INTEGER,
-
-    stop_loss DOUBLE,
-    take_profit DOUBLE,
-
-    initial_capital DOUBLE
-)
-""")
-
-def create_strategy(
-    name,
-    ema_fast,
-    ema_slow,
-    ema_trend,
-    rsi_period,
-    rsi_min,
-    stop_loss,
-    take_profit,
-    initial_capital
-):
+def create_strategy(name, ema_fast, ema_slow, ema_trend, rsi_period, rsi_min, stop_loss, take_profit, initial_capital):
     next_id = db.execute(
         """
         SELECT COALESCE(MAX(id), 0) + 1
@@ -100,239 +83,147 @@ def create_strategy(
     db.execute(
         """
         INSERT INTO strategies
-        (
-            id,
-            name,
-            ema_fast,
-            ema_slow,
-            ema_trend,
-            rsi_period,
-            rsi_min,
-            stop_loss,
-            take_profit,
-            initial_capital
-        )
+        (id, name, ema_fast, ema_slow, ema_trend, rsi_period, rsi_min, stop_loss, take_profit, initial_capital)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """,
-        [
-            next_id,
-            name,
-            ema_fast,
-            ema_slow,
-            ema_trend,
-            rsi_period,
-            rsi_min,
-            stop_loss,
-            take_profit,
-            initial_capital
-        ]
+        [next_id, name, ema_fast, ema_slow, ema_trend, rsi_period, rsi_min, stop_loss, take_profit, initial_capital]
     )
 
-def get_strategies():
+    db.commit()
+    return next_id
 
+
+def get_strategies():
     return db.execute(
         """
-        SELECT *
-        FROM strategies
-        ORDER BY id
+        SELECT * FROM strategies ORDER BY id
         """
     ).fetchall()
 
-def get_strategy(strategy_id):
 
+def get_strategy(strategy_id):
     return db.execute(
         """
-        SELECT *
-        FROM strategies
-        WHERE id = ?
+        SELECT * FROM strategies WHERE id = ?
         """,
         [strategy_id]
     ).fetchone()
 
 
 def create_default_strategy():
-
     exists = db.execute(
         """
-        SELECT COUNT(*)
-        FROM strategies
+        SELECT COUNT(*) FROM strategies
         """
     ).fetchone()[0]
 
     if exists == 0:
+        create_strategy("Default", 9, 20, 50, 14, 55, 1.0, 2.0, 1000)
 
-        create_strategy(
-            "Default",
-            9,
-            20,
-            50,
-            14,
-            55,
-            1.0,
-            2.0,
-            1000
-        )
 
 # =========================
 # Nombre de bougies
 # =========================
 def count_candles():
-
     result = db.execute(
         """
-        SELECT COUNT(*)
-        FROM candles
+        SELECT COUNT(*) FROM candles
         """
     ).fetchone()
-
     return result[0]
 
+
 # =========================
-# Dernières bougies
+# Dernieres bougies
 # =========================
 def get_last_candles(limit=100):
-
     rows = db.execute(
         """
-        SELECT
-            timestamp,
-            symbol,
-            open,
-            high,
-            low,
-            close,
-            volume
+        SELECT timestamp, symbol, open, high, low, close, volume
         FROM candles
         ORDER BY timestamp DESC
         LIMIT ?
         """,
         [limit]
     ).fetchall()
-
     print("ROWS =", len(rows))
     return rows
 
 
 # =========================
-# settings
+# Settings
 # =========================
 def set_setting(key, value):
-
     db.execute(
         """
-        INSERT OR REPLACE INTO settings
-        VALUES (?, ?)
+        INSERT OR REPLACE INTO settings VALUES (?, ?)
         """,
         [key, str(value)]
     )
+    db.commit()
 
 
 def get_setting(key, default_value):
-
     result = db.execute(
         """
-        SELECT value
-        FROM settings
-        WHERE key = ?
+        SELECT value FROM settings WHERE key = ?
         """,
         [key]
     ).fetchone()
-
     if result:
         return result[0]
-
     return default_value
 
+
 def clone_strategy(strategy_id):
-
     row = get_strategy(strategy_id)
-
     if not row:
         return None
 
     next_id = db.execute(
         """
-        SELECT COALESCE(MAX(id), 0) + 1
-        FROM strategies
+        SELECT COALESCE(MAX(id), 0) + 1 FROM strategies
         """
     ).fetchone()[0]
 
     db.execute(
         """
-        INSERT INTO strategies (
-            id,
-            name,
-            ema_fast,
-            ema_slow,
-            ema_trend,
-            rsi_period,
-            rsi_min,
-            stop_loss,
-            take_profit,
-            initial_capital
-        )
+        INSERT INTO strategies
+        (id, name, ema_fast, ema_slow, ema_trend, rsi_period, rsi_min, stop_loss, take_profit, initial_capital)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """,
-        (
-            next_id,
-            row[1] + " Copy",
-            row[2],
-            row[3],
-            row[4],
-            row[5],
-            row[6],
-            row[7],
-            row[8],
-            row[9]
-        )
+        (next_id, row[1] + " Copy", row[2], row[3], row[4], row[5], row[6], row[7], row[8], row[9])
     )
 
     db.commit()
-
     return next_id
 
-def delete_strategy(strategy_id):
 
+def delete_strategy(strategy_id):
     db.execute(
         """
-        DELETE FROM strategies
-        WHERE id = ?
+        DELETE FROM strategies WHERE id = ?
         """,
         (strategy_id,)
     )
-
     db.commit()
+
 
 def update_strategy(strategy_id, name, ema_fast, ema_slow, ema_trend,
                     rsi_period, rsi_min, stop_loss, take_profit, initial_capital):
     db.execute(
         """
         UPDATE strategies
-        SET name = ?,
-            ema_fast = ?,
-            ema_slow = ?,
-            ema_trend = ?,
-            rsi_period = ?,
-            rsi_min = ?,
-            stop_loss = ?,
-            take_profit = ?,
+        SET name = ?, ema_fast = ?, ema_slow = ?, ema_trend = ?,
+            rsi_period = ?, rsi_min = ?, stop_loss = ?, take_profit = ?,
             initial_capital = ?
         WHERE id = ?
         """,
         [
-            name,
-            int(ema_fast),
-            int(ema_slow),
-            int(ema_trend),
-            int(rsi_period),
-            int(rsi_min),
-            float(stop_loss),
-            float(take_profit),
-            float(initial_capital),
+            name, int(ema_fast), int(ema_slow), int(ema_trend),
+            int(rsi_period), int(rsi_min),
+            float(stop_loss), float(take_profit), float(initial_capital),
             int(strategy_id)
         ]
     )
-
     db.commit()
-    
-        

@@ -1104,7 +1104,7 @@ async function initSettings() {
             </div>
         </div>`;
     } else {
-        html += '<div class="card mb-5"><h3 class="font-semibold text-sm mb-3"><i class="fas fa-sliders-h text-accent mr-2"></i>Parametres</h3><p class="text-muted">Impossible de charger</p></div>';
+        html += '<div class="card mb-5"><p class="text-muted">Impossible de charger les parametres</p></div>';
     }
 
     const config = await api('/config');
@@ -1182,6 +1182,84 @@ async function runDebug() {
   html+=`<div class="card"><h3 class="font-semibold text-sm mb-3"><i class="fas fa-file-code text-accent mr-2"></i>Brut</h3>
     <pre class="mono text-xs text-muted overflow-x-auto p-3 rounded-lg" style="background:var(--bg);max-height:400px">${JSON.stringify(result,null,2)}</pre></div>`;
   document.getElementById('debug-content').innerHTML=html;
+}
+
+// ============================
+// MODIFIER LES PARAMETRES
+// ============================
+async function editSettingsModal() {
+    const settings = await api('/settings');
+    if (!settings) {
+        toast('Erreur chargement parametres', 'error');
+        return;
+    }
+
+    const fields = [
+        { key: 'timeframe', label: 'Timeframe', type: 'text', placeholder: '1hour, 4hour, etc.' },
+        { key: 'history_size', label: 'Taille historique', type: 'number' },
+        { key: 'ema_fast', label: 'EMA Fast', type: 'number' },
+        { key: 'ema_slow', label: 'EMA Slow', type: 'number' },
+        { key: 'rsi_period', label: 'RSI Periode', type: 'number' },
+        { key: 'stop_loss', label: 'Stop Loss', type: 'number', step: '0.01' },
+        { key: 'take_profit', label: 'Take Profit', type: 'number', step: '0.01' },
+        { key: 'initial_capital', label: 'Capital initial ($)', type: 'number', step: '100' }
+    ];
+
+    let formHtml = '<div class="space-y-3">';
+    fields.forEach(f => {
+        formHtml += `
+            <div>
+                <label class="text-xs text-muted block mb-1">${f.label}</label>
+                <input
+                    type="${f.type}"
+                    id="setting-${f.key}"
+                    value="${settings[f.key] !== undefined ? settings[f.key] : ''}"
+                    ${f.step ? `step="${f.step}"` : ''}
+                    ${f.placeholder ? `placeholder="${f.placeholder}"` : ''}
+                    class="w-full bg-[var(--bg3)] text-[var(--fg)] border border-[var(--border)] rounded-lg px-3 py-2 text-sm mono"
+                />
+            </div>
+        `;
+    });
+    formHtml += '</div>';
+
+    showModal(
+        'Modifier les parametres',
+        formHtml,
+        `<button onclick="closeModal()" class="btn btn-secondary">Annuler</button>
+         <button onclick="saveSettingsEdit()" class="btn btn-primary"><i class="fas fa-save"></i>Sauvegarder</button>`
+    );
+}
+
+async function saveSettingsEdit() {
+    const keys = ['timeframe', 'history_size', 'ema_fast', 'ema_slow', 'rsi_period', 'stop_loss', 'take_profit', 'initial_capital'];
+    const data = {};
+
+    keys.forEach(k => {
+        const el = document.getElementById(`setting-${k}`);
+        if (el) data[k] = el.value;
+    });
+
+    const emaFast = parseInt(data.ema_fast);
+    const emaSlow = parseInt(data.ema_slow);
+    if (emaFast >= emaSlow) {
+        toast('EMA Fast doit etre inferieur a EMA Slow', 'error');
+        return;
+    }
+
+    const result = await api('/settings/update', {
+        method: 'POST',
+        body: JSON.stringify(data)
+    });
+
+    if (result && result.success) {
+        closeModal();
+        toast('Parametres mis a jour', 'success');
+        initSettings();
+        updateHeader();
+    } else {
+        toast('Erreur lors de la mise a jour', 'error');
+    }
 }
 
 // ============================

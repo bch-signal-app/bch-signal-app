@@ -274,8 +274,9 @@ def price():
 # =========================
 @app.route("/refresh")
 def refresh():
-
     df = get_data()
+
+    db.commit()
 
     return {
         "loaded": len(df),
