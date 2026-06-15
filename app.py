@@ -575,6 +575,25 @@ def settings():
             )
     })
 
+# =========================
+# settings/update
+# =========================
+@app.route("/settings/update", methods=["POST"])
+def update_settings():
+
+    data = request.get_json()
+
+    if not data:
+        return jsonify({
+            "error": "no data provided"
+        })
+
+    for key, value in data.items():
+        set_setting(key, str(value))
+
+    return jsonify({
+        "success": True
+    })
 
 # =========================
 # active-strategy 

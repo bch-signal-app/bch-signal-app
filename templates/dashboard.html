@@ -899,6 +899,83 @@ async function saveStrategyEdit(id) {
     }
 }
 
+// Ouvrir le modal des parametres
+async function editSettingsModal() {
+    const settings = await api('/settings');
+    if (!settings) {
+        toast('Erreur chargement parametres', 'error');
+        return;
+    }
+
+    const fields = [
+        { key: 'timeframe', label: 'Timeframe', type: 'text', placeholder: '1hour, 4hour, etc.' },
+        { key: 'history_size', label: 'Taille historique', type: 'number' },
+        { key: 'ema_fast', label: 'EMA Fast', type: 'number' },
+        { key: 'ema_slow', label: 'EMA Slow', type: 'number' },
+        { key: 'rsi_period', label: 'RSI Periode', type: 'number' },
+        { key: 'stop_loss', label: 'Stop Loss', type: 'number', step: '0.01' },
+        { key: 'take_profit', label: 'Take Profit', type: 'number', step: '0.01' },
+        { key: 'initial_capital', label: 'Capital initial ($)', type: 'number', step: '100' }
+    ];
+
+    let formHtml = '<div class="space-y-3">';
+    fields.forEach(f => {
+        formHtml += `
+            <div>
+                <label class="text-xs text-muted block mb-1">${f.label}</label>
+                <input 
+                    type="${f.type}" 
+                    id="setting-${f.key}" 
+                    value="${settings[f.key] !== undefined ? settings[f.key] : ''}" 
+                    ${f.step ? `step="${f.step}"` : ''}
+                    ${f.placeholder ? `placeholder="${f.placeholder}"` : ''}
+                    class="w-full bg-[var(--bg3)] text-[var(--fg)] border border-[var(--border)] rounded-lg px-3 py-2 text-sm mono" 
+                />
+            </div>
+        `;
+    });
+    formHtml += '</div>';
+
+    showModal(
+        'Modifier les parametres',
+        formHtml,
+        `<button onclick="closeModal()" class="btn btn-secondary">Annuler</button>
+         <button onclick="saveSettingsEdit()" class="btn btn-primary"><i class="fas fa-save"></i>Sauvegarder</button>`
+    );
+}
+
+// Sauvegarder les parametres
+async function saveSettingsEdit() {
+    const keys = ['timeframe', 'history_size', 'ema_fast', 'ema_slow', 'rsi_period', 'stop_loss', 'take_profit', 'initial_capital'];
+    const data = {};
+
+    keys.forEach(k => {
+        const el = document.getElementById(`setting-${k}`);
+        if (el) data[k] = el.value;
+    });
+
+    // Validation basique
+    const emaFast = parseInt(data.ema_fast);
+    const emaSlow = parseInt(data.ema_slow);
+    if (emaFast >= emaSlow) {
+        toast('EMA Fast doit etre inferieur a EMA Slow', 'error');
+        return;
+    }
+
+    const result = await api('/settings/update', {
+        method: 'POST',
+        body: JSON.stringify(data)
+    });
+
+    if (result && result.success) {
+        closeModal();
+        toast('Parametres mis a jour', 'success');
+        initSettings();
+        updateHeader();
+    } else {
+        toast('Erreur lors de la mise a jour', 'error');
+    }
+}
 
 
 // ============================
@@ -1011,17 +1088,30 @@ async function initSettings() {
     if (!stillOnPage('settings')) return;
 
     if (settings) {
-        html+=`<div class="card mb-5"><h3 class="font-semibold text-sm mb-4"><i class="fas fa-sliders-h text-accent mr-2"></i>Parametres actifs</h3>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">${Object.entries(settings).map(([k,v])=>`<div class="flex items-center justify-between p-3 rounded-lg" style="background:var(--bg3)"><span class="text-sm text-muted">${k}</span><span class="mono font-semibold text-sm">${v}</span></div>`).join('')}</div></div>`;
+        html += `
+        <div class="card mb-5">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="font-semibold text-sm"><i class="fas fa-sliders-h text-accent mr-2"></i>Parametres actifs</h3>
+                <button onclick="editSettingsModal()" class="btn btn-primary btn-sm"><i class="fas fa-edit"></i>Modifier</button>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                ${Object.entries(settings).map(([k,v]) => `
+                    <div class="flex items-center justify-between p-3 rounded-lg" style="background:var(--bg3)">
+                        <span class="text-sm text-muted">${k}</span>
+                        <span class="mono font-semibold text-sm">${v}</span>
+                    </div>
+                `).join('')}
+            </div>
+        </div>`;
     } else {
-        html+=`<div class="card mb-5"><h3 class="font-semibold text-sm mb-3"><i class="fas fa-sliders-h text-accent mr-2"></i>Parametres</h3><p class="text-muted">Impossible de charger</p></div>`;
+        html += '<div class="card mb-5"><h3 class="font-semibold text-sm mb-3"><i class="fas fa-sliders-h text-accent mr-2"></i>Parametres</h3><p class="text-muted">Impossible de charger</p></div>';
     }
 
     const config = await api('/config');
     if (!stillOnPage('settings')) return;
 
     if (config) {
-        html+=`<div class="card mb-5"><h3 class="font-semibold text-sm mb-4"><i class="fas fa-cog text-accent mr-2"></i>Configuration</h3>
+        html += `<div class="card mb-5"><h3 class="font-semibold text-sm mb-4"><i class="fas fa-cog text-accent mr-2"></i>Configuration (lecture seule)</h3>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">${Object.entries(config).map(([k,v])=>`<div class="flex items-center justify-between p-3 rounded-lg" style="background:var(--bg3)"><span class="text-sm text-muted">${k}</span><span class="mono font-semibold text-sm">${v}</span></div>`).join('')}</div></div>`;
     }
 
@@ -1029,7 +1119,7 @@ async function initSettings() {
     if (!stillOnPage('settings')) return;
 
     if (dbinfo) {
-        html+=`<div class="card mb-5"><h3 class="font-semibold text-sm mb-4"><i class="fas fa-database text-accent mr-2"></i>Base de donnees</h3>
+        html += `<div class="card mb-5"><h3 class="font-semibold text-sm mb-4"><i class="fas fa-database text-accent mr-2"></i>Base de donnees</h3>
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div class="p-4 rounded-lg text-center" style="background:var(--bg3)"><div class="stat-label">Premier</div><div class="mono font-semibold text-sm mt-1">${fmtDateTime(dbinfo.min_timestamp)}</div></div>
                 <div class="p-4 rounded-lg text-center" style="background:var(--bg3)"><div class="stat-label">Dernier</div><div class="mono font-semibold text-sm mt-1">${fmtDateTime(dbinfo.max_timestamp)}</div></div>
@@ -1041,11 +1131,11 @@ async function initSettings() {
     if (!stillOnPage('settings')) return;
 
     if (version) {
-        html+=`<div class="card mb-5"><h3 class="font-semibold text-sm mb-3"><i class="fas fa-code-branch text-accent mr-2"></i>Version</h3>
+        html += `<div class="card mb-5"><h3 class="font-semibold text-sm mb-3"><i class="fas fa-code-branch text-accent mr-2"></i>Version</h3>
             <div class="p-3 rounded-lg flex items-center justify-between" style="background:var(--bg3)"><span class="text-muted text-sm">Version</span><span class="mono font-bold text-accent">${version.version}</span></div></div>`;
     }
 
-    html+=`<div class="card"><h3 class="font-semibold text-sm mb-4"><i class="fas fa-tools text-accent mr-2"></i>Actions</h3>
+    html += `<div class="card"><h3 class="font-semibold text-sm mb-4"><i class="fas fa-tools text-accent mr-2"></i>Actions</h3>
         <div class="flex flex-wrap gap-3">
             <button onclick="refreshData()" class="btn btn-primary"><i class="fas fa-sync-alt"></i>Rafraichir</button>
             <button onclick="navigateTo('debug')" class="btn btn-secondary"><i class="fas fa-bug"></i>Debug</button>
