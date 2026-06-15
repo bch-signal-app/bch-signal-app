@@ -194,6 +194,12 @@ def home():
         "pair": APP_SYMBOL
     })
 
+# =========================
+# dashboard
+# =========================
+@app.route("/dashboard")
+def dashboard():
+    return render_template("dashboard.html")
 
 # =========================
 # version
@@ -758,13 +764,6 @@ def compare_backtests():
 # Créer Une seule fois 
 # =========================
 create_default_strategy()
-
-# =========================
-# dashboard
-# =========================
-@app.route("/dashboard")
-def dashboard():
-    return render_template("dashboard.html")
 
 # =========================
 # Render
