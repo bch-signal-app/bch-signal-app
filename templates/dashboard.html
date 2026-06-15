@@ -9,208 +9,114 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script>
-tailwind.config = {
-  theme: {
-    extend: {
-      fontFamily: {
-        display: ['Space Grotesk', 'sans-serif'],
-        mono: ['JetBrains Mono', 'monospace']
-      }
-    }
-  }
-}
+tailwind.config={theme:{extend:{fontFamily:{display:['Space Grotesk','sans-serif'],mono:['JetBrains Mono','monospace']}}}}
 </script>
 <style>
-:root {
-  --bg: #060a12;
-  --bg2: #0c1220;
-  --bg3: #111a2e;
-  --border: #1a2540;
-  --border-glow: rgba(16,185,129,0.15);
-  --fg: #e4e9f0;
-  --muted: #5a6a82;
-  --accent: #10b981;
-  --accent2: #059669;
-  --buy: #22c55e;
-  --sell: #ef4444;
-  --hold: #f59e0b;
-}
-* { box-sizing: border-box; margin: 0; padding: 0; }
-body { background: var(--bg); color: var(--fg); font-family: 'Space Grotesk', sans-serif; overflow-x: hidden; }
-::-webkit-scrollbar { width: 6px; height: 6px; }
-::-webkit-scrollbar-track { background: var(--bg2); }
-::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: var(--muted); }
-
-.card {
-  background: var(--bg2);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 20px;
-  transition: all 0.3s ease;
-}
-.card:hover {
-  border-color: var(--border-glow);
-  box-shadow: 0 0 30px rgba(16,185,129,0.06);
-}
-
-.pulse-dot {
-  width: 8px; height: 8px; border-radius: 50%;
-  animation: pulse 2s ease-in-out infinite;
-}
-@keyframes pulse {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.5; transform: scale(1.5); }
-}
-
-.nav-item {
-  display: flex; align-items: center; gap: 12px;
-  padding: 10px 16px; border-radius: 8px;
-  color: var(--muted); cursor: pointer;
-  transition: all 0.2s ease; font-size: 14px; font-weight: 500;
-}
-.nav-item:hover { color: var(--fg); background: var(--bg3); }
-.nav-item.active {
-  color: var(--accent); background: rgba(16,185,129,0.1);
-  border-left: 3px solid var(--accent);
-}
-.nav-item i { width: 20px; text-align: center; font-size: 15px; }
-
-.btn {
-  padding: 8px 18px; border-radius: 8px; border: none;
-  font-family: 'Space Grotesk', sans-serif; font-weight: 600;
-  font-size: 13px; cursor: pointer; transition: all 0.2s;
-  display: inline-flex; align-items: center; gap: 6px;
-}
-.btn-primary { background: var(--accent); color: #000; }
-.btn-primary:hover { background: var(--accent2); transform: translateY(-1px); }
-.btn-danger { background: rgba(239,68,68,0.15); color: var(--sell); border: 1px solid rgba(239,68,68,0.3); }
-.btn-danger:hover { background: rgba(239,68,68,0.25); }
-.btn-secondary { background: var(--bg3); color: var(--fg); border: 1px solid var(--border); }
-.btn-secondary:hover { border-color: var(--accent); }
-.btn-sm { padding: 5px 12px; font-size: 12px; }
-
-.mono { font-family: 'JetBrains Mono', monospace; }
-.text-buy { color: var(--buy); }
-.text-sell { color: var(--sell); }
-.text-hold { color: var(--hold); }
-.text-accent { color: var(--accent); }
-.text-muted { color: var(--muted); }
-
-.badge {
-  display: inline-flex; align-items: center; gap: 6px;
-  padding: 4px 12px; border-radius: 20px;
-  font-weight: 700; font-size: 13px; letter-spacing: 0.5px;
-}
-.badge-buy { background: rgba(34,197,94,0.15); color: var(--buy); }
-.badge-sell { background: rgba(239,68,68,0.15); color: var(--sell); }
-.badge-hold { background: rgba(245,158,11,0.15); color: var(--hold); }
-
-.skeleton {
-  background: linear-gradient(90deg, var(--bg3) 25%, var(--border) 50%, var(--bg3) 75%);
-  background-size: 200% 100%;
-  animation: shimmer 1.5s ease-in-out infinite;
-  border-radius: 6px;
-}
-@keyframes shimmer { to { background-position: -200% 0; } }
-
-.fade-in { animation: fadeIn 0.35s ease; }
-@keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
-
-.toast-container { position: fixed; top: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 8px; }
-.toast {
-  padding: 12px 20px; border-radius: 10px; font-size: 13px; font-weight: 500;
-  animation: slideIn 0.3s ease, fadeOut 0.3s ease 2.7s;
-  min-width: 250px; box-shadow: 0 8px 30px rgba(0,0,0,0.4);
-}
-.toast-success { background: rgba(34,197,94,0.15); color: var(--buy); border: 1px solid rgba(34,197,94,0.3); }
-.toast-error { background: rgba(239,68,68,0.15); color: var(--sell); border: 1px solid rgba(239,68,68,0.3); }
-.toast-info { background: rgba(16,185,129,0.15); color: var(--accent); border: 1px solid rgba(16,185,129,0.3); }
-.toast-warn { background: rgba(245,158,11,0.15); color: var(--hold); border: 1px solid rgba(245,158,11,0.3); }
-@keyframes slideIn { from { transform: translateX(100px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
-@keyframes fadeOut { to { opacity: 0; transform: translateX(50px); } }
-
-.stat-value { font-family: 'JetBrains Mono', monospace; font-size: 28px; font-weight: 700; line-height: 1.1; }
-.stat-label { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: 1px; margin-top: 4px; }
-
-table { width: 100%; border-collapse: collapse; }
-th { text-align: left; padding: 10px 12px; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); border-bottom: 1px solid var(--border); font-weight: 600; }
-td { padding: 10px 12px; font-size: 13px; border-bottom: 1px solid rgba(26,37,64,0.5); }
-tr:hover td { background: rgba(16,185,129,0.03); }
-
-.modal-overlay {
-  position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 999;
-  display: flex; align-items: center; justify-content: center;
-  animation: fadeIn 0.2s ease;
-}
-.modal-content {
-  background: var(--bg2); border: 1px solid var(--border); border-radius: 16px;
-  padding: 24px; max-width: 480px; width: 90%;
-}
-
-.bg-pattern {
-  background-image:
-    radial-gradient(circle at 20% 20%, rgba(16,185,129,0.03) 0%, transparent 50%),
-    radial-gradient(circle at 80% 80%, rgba(16,185,129,0.02) 0%, transparent 50%);
-}
-
-.sidebar { width: 230px; min-width: 230px; }
-@media (max-width: 768px) {
-  .sidebar { position: fixed; left: -240px; z-index: 100; height: 100vh; transition: left 0.3s; background: var(--bg2); border-right: 1px solid var(--border); }
-  .sidebar.open { left: 0; }
-  .main-content { margin-left: 0 !important; }
-}
-
-.progress-bar { height: 6px; border-radius: 3px; background: var(--bg3); overflow: hidden; }
-.progress-fill { height: 100%; border-radius: 3px; transition: width 0.5s ease; }
-
-.loading-overlay {
-  display: flex; flex-direction: column; align-items: center; justify-content: center;
-  padding: 40px; gap: 16px;
-}
-.spinner {
-  width: 32px; height: 32px; border: 3px solid var(--border);
-  border-top-color: var(--accent); border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-}
-@keyframes spin { to { transform: rotate(360deg); } }
+:root{--bg:#060a12;--bg2:#0c1220;--bg3:#111a2e;--border:#1a2540;--fg:#e4e9f0;--muted:#5a6a82;--accent:#10b981;--accent2:#059669;--buy:#22c55e;--sell:#ef4444;--hold:#f59e0b}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--fg);font-family:'Space Grotesk',sans-serif;overflow-x:hidden}
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:var(--bg2)}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:20px;transition:all .3s ease}
+.card:hover{border-color:rgba(16,185,129,.15);box-shadow:0 0 30px rgba(16,185,129,.06)}
+.pulse-dot{width:8px;height:8px;border-radius:50%;animation:pulse 2s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(1.5)}}
+.nav-item{display:flex;align-items:center;gap:12px;padding:10px 16px;border-radius:8px;color:var(--muted);cursor:pointer;transition:all .2s ease;font-size:14px;font-weight:500}
+.nav-item:hover{color:var(--fg);background:var(--bg3)}
+.nav-item.active{color:var(--accent);background:rgba(16,185,129,.1);border-left:3px solid var(--accent)}
+.nav-item i{width:20px;text-align:center;font-size:15px}
+.btn{padding:8px 18px;border-radius:8px;border:none;font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:13px;cursor:pointer;transition:all .2s;display:inline-flex;align-items:center;gap:6px}
+.btn-primary{background:var(--accent);color:#000}
+.btn-primary:hover{background:var(--accent2);transform:translateY(-1px)}
+.btn-danger{background:rgba(239,68,68,.15);color:var(--sell);border:1px solid rgba(239,68,68,.3)}
+.btn-danger:hover{background:rgba(239,68,68,.25)}
+.btn-secondary{background:var(--bg3);color:var(--fg);border:1px solid var(--border)}
+.btn-secondary:hover{border-color:var(--accent)}
+.btn-sm{padding:5px 12px;font-size:12px}
+.mono{font-family:'JetBrains Mono',monospace}
+.badge{display:inline-flex;align-items:center;gap:6px;padding:4px 12px;border-radius:20px;font-weight:700;font-size:13px;letter-spacing:.5px}
+.badge-buy{background:rgba(34,197,94,.15);color:var(--buy)}
+.badge-sell{background:rgba(239,68,68,.15);color:var(--sell)}
+.badge-hold{background:rgba(245,158,11,.15);color:var(--hold)}
+.fade-in{animation:fadeIn .35s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.toast-container{position:fixed;top:20px;right:20px;z-index:9999;display:flex;flex-direction:column;gap:8px}
+.toast{padding:12px 20px;border-radius:10px;font-size:13px;font-weight:500;animation:slideIn .3s ease,fadeOut .3s ease 2.7s;min-width:250px;box-shadow:0 8px 30px rgba(0,0,0,.4)}
+.toast-success{background:rgba(34,197,94,.15);color:var(--buy);border:1px solid rgba(34,197,94,.3)}
+.toast-error{background:rgba(239,68,68,.15);color:var(--sell);border:1px solid rgba(239,68,68,.3)}
+.toast-info{background:rgba(16,185,129,.15);color:var(--accent);border:1px solid rgba(16,185,129,.3)}
+.toast-warn{background:rgba(245,158,11,.15);color:var(--hold);border:1px solid rgba(245,158,11,.3)}
+@keyframes slideIn{from{transform:translateX(100px);opacity:0}to{transform:translateX(0);opacity:1}}
+@keyframes fadeOut{to{opacity:0;transform:translateX(50px)}}
+.stat-value{font-family:'JetBrains Mono',monospace;font-size:28px;font-weight:700;line-height:1.1}
+.stat-label{color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:1px;margin-top:4px}
+table{width:100%;border-collapse:collapse}
+th{text-align:left;padding:10px 12px;font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);border-bottom:1px solid var(--border);font-weight:600}
+td{padding:10px 12px;font-size:13px;border-bottom:1px solid rgba(26,37,64,.5)}
+tr:hover td{background:rgba(16,185,129,.03)}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:999;display:flex;align-items:center;justify-content:center;animation:fadeIn .2s ease}
+.modal-content{background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:24px;max-width:480px;width:90%}
+.bg-pattern{background-image:radial-gradient(circle at 20% 20%,rgba(16,185,129,.03) 0%,transparent 50%),radial-gradient(circle at 80% 80%,rgba(16,185,129,.02) 0%,transparent 50%)}
+.sidebar{width:230px;min-width:230px}
+@media(max-width:768px){.sidebar{position:fixed;left:-240px;z-index:100;height:100vh;transition:left .3s;background:var(--bg2);border-right:1px solid var(--border)}.sidebar.open{left:0}.main-content{margin-left:0!important}}
+.progress-bar{height:6px;border-radius:3px;background:var(--bg3);overflow:hidden}
+.progress-fill{height:100%;border-radius:3px;transition:width .5s ease}
+.spinner{width:32px;height:32px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.wake-overlay{position:fixed;inset:0;background:rgba(6,10,18,.95);z-index:10000;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px}
+.wake-bar{width:200px;height:4px;border-radius:2px;background:var(--bg3);overflow:hidden}
+.wake-bar-fill{height:100%;background:var(--accent);border-radius:2px;animation:wakeFill 4s ease-in-out forwards}
+@keyframes wakeFill{0%{width:0}30%{width:30%}60%{width:55%}80%{width:75%}100%{width:100%}}
+.data-slot{min-height:32px;display:flex;align-items:center}
+.data-loading{color:var(--muted);font-size:12px;display:flex;align-items:center;gap:6px}
+.data-loading .mini-spin{width:12px;height:12px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite}
+.data-error{color:var(--sell);font-size:12px;cursor:pointer}
+.data-error:hover{text-decoration:underline}
 </style>
 </head>
 <body class="bg-pattern">
 
-<!-- Toasts -->
 <div class="toast-container" id="toasts"></div>
-
-<!-- Modal Container -->
 <div id="modal-root"></div>
 
+<!-- Ecran de reveil -->
+<div class="wake-overlay" id="wake-overlay">
+  <div style="background:linear-gradient(135deg,var(--accent),#059669);width:48px;height:48px;border-radius:12px;display:flex;align-items:center;justify-content:center;">
+    <i class="fas fa-chart-line text-black text-xl"></i>
+  </div>
+  <div class="font-display font-bold text-xl">NeonTrade</div>
+  <div class="text-muted text-sm" id="wake-status">Connexion au serveur...</div>
+  <div class="wake-bar"><div class="wake-bar-fill" id="wake-bar-fill"></div></div>
+  <div class="text-muted text-xs" id="wake-detail">Le serveur peut mettre 30-60s a se reveiller</div>
+</div>
+
 <!-- Header -->
-<header class="sticky top-0 z-50 border-b border-[var(--border)]" style="background: rgba(6,10,18,0.85); backdrop-filter: blur(16px);">
+<header class="sticky top-0 z-50 border-b border-[var(--border)]" style="background:rgba(6,10,18,.85);backdrop-filter:blur(16px)">
   <div class="flex items-center justify-between px-5 py-3">
     <div class="flex items-center gap-4">
       <button id="menu-toggle" class="md:hidden text-[var(--muted)] hover:text-[var(--fg)] text-lg"><i class="fas fa-bars"></i></button>
       <div class="flex items-center gap-3">
-        <div class="w-8 h-8 rounded-lg flex items-center justify-center" style="background: linear-gradient(135deg, var(--accent), #059669);">
+        <div class="w-8 h-8 rounded-lg flex items-center justify-center" style="background:linear-gradient(135deg,var(--accent),#059669)">
           <i class="fas fa-chart-line text-black text-sm"></i>
         </div>
         <span class="font-display font-bold text-lg tracking-tight">NeonTrade</span>
-        <span class="text-muted text-xs mono hidden sm:inline">v2</span>
       </div>
     </div>
     <div class="flex items-center gap-5">
-      <div class="flex items-center gap-2" id="header-price">
+      <div class="flex items-center gap-2">
         <span class="text-muted text-xs font-semibold">BCH/USDT</span>
         <span class="mono font-bold text-lg" id="hdr-price">---.--</span>
       </div>
-      <div id="header-signal" class="hidden sm:flex items-center gap-2">
-        <div class="pulse-dot" id="hdr-signal-dot" style="background: var(--muted);"></div>
+      <div class="hidden sm:flex items-center gap-2">
+        <div class="pulse-dot" id="hdr-signal-dot" style="background:var(--muted)"></div>
         <span class="mono font-bold text-sm" id="hdr-signal-text">---</span>
       </div>
       <div class="flex items-center gap-2">
-        <div class="w-2 h-2 rounded-full" id="hdr-status" style="background: var(--muted);"></div>
+        <div class="w-2 h-2 rounded-full" id="hdr-status" style="background:var(--muted)"></div>
         <span class="text-muted text-xs hidden sm:inline" id="hdr-status-text">Hors ligne</span>
       </div>
-      <button onclick="refreshData()" class="btn btn-secondary btn-sm" title="Rafraichir les donnees">
+      <button onclick="refreshData()" class="btn btn-secondary btn-sm" title="Rafraichir">
         <i class="fas fa-sync-alt" id="refresh-icon"></i>
         <span class="hidden sm:inline">Refresh</span>
       </button>
@@ -218,9 +124,8 @@ tr:hover td { background: rgba(16,185,129,0.03); }
   </div>
 </header>
 
-<!-- Layout -->
-<div class="flex" style="min-height: calc(100vh - 52px);">
-  <nav class="sidebar border-r border-[var(--border)] p-4 flex flex-col gap-1" style="background: var(--bg2);" id="sidebar">
+<div class="flex" style="min-height:calc(100vh - 52px)">
+  <nav class="sidebar border-r border-[var(--border)] p-4 flex flex-col gap-1" style="background:var(--bg2)" id="sidebar">
     <div class="text-muted text-[10px] uppercase tracking-widest font-bold mb-2 px-3">Navigation</div>
     <div class="nav-item active" data-page="dashboard"><i class="fas fa-th-large"></i>Dashboard</div>
     <div class="nav-item" data-page="chart"><i class="fas fa-chart-area"></i>Chart</div>
@@ -238,7 +143,6 @@ tr:hover td { background: rgba(16,185,129,0.03); }
       </div>
     </div>
   </nav>
-
   <main class="flex-1 p-5 md:p-8 overflow-y-auto main-content" id="main-content"></main>
 </div>
 
@@ -247,105 +151,77 @@ tr:hover td { background: rgba(16,185,129,0.03); }
 // CONFIG
 // ============================
 const API = '';
-const API_TIMEOUT = 60000;    // 60s timeout (Render cold start)
-const MAX_RETRIES = 2;
+const API_TIMEOUT = 90000;
 let refreshTimer = null;
 let currentPage = 'dashboard';
 let chartInstance = null;
 let rsiChartInstance = null;
+let serverAwake = false;
 
 // ============================
-// ETAT GLOBAL
-// ============================
-const state = {
-  connected: false,
-  price: null,
-  signal: null,
-  config: null,
-  settings: null,
-  strategies: [],
-  activeStrategy: null,
-  dbinfo: null,
-  version: null,
-  history: [],
-  backtestResult: null,
-  compareResult: null,
-  debugData: null
-};
-
-// ============================
-// API SERVICE AVEC TIMEOUT + RETRY
+// API AVEC TIMEOUT + RETRY SEQUENTIEL
 // ============================
 async function api(endpoint, options = {}, retryCount = 0) {
   const url = `${API}${endpoint}`;
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), API_TIMEOUT);
+  const tid = setTimeout(() => controller.abort(), API_TIMEOUT);
 
   try {
-    console.log(`[API] ${options.method || 'GET'} ${url} (tentative ${retryCount + 1})`);
+    console.log(`[API] ${options.method||'GET'} ${url} (essai ${retryCount+1})`);
     const resp = await fetch(url, {
       ...options,
       signal: controller.signal,
-      headers: { 'Content-Type': 'application/json', ...(options.headers || {}) }
+      headers: { 'Content-Type': 'application/json', ...(options.headers||{}) }
     });
-    clearTimeout(timeoutId);
-
-    if (!resp.ok) {
-      const text = await resp.text().catch(() => '');
-      console.error(`[API] HTTP ${resp.status}: ${text}`);
-      throw new Error(`HTTP ${resp.status}`);
-    }
-
+    clearTimeout(tid);
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
     const data = await resp.json();
-    console.log(`[API] ${endpoint} OK`, data);
+    console.log(`[API] ${endpoint} OK:`, typeof data === 'object' ? JSON.stringify(data).substring(0,120) : data);
     return data;
-
   } catch (e) {
-    clearTimeout(timeoutId);
+    clearTimeout(tid);
     const isTimeout = e.name === 'AbortError';
-    const errMsg = isTimeout ? 'Timeout (serveur en reveil?)' : e.message;
-    console.error(`[API] Erreur ${endpoint}: ${errMsg}`);
-
-    // Retry si timeout ou erreur reseau
-    if (retryCount < MAX_RETRIES && (isTimeout || e.message.includes('Failed to fetch'))) {
-      console.log(`[API] Retry ${endpoint} dans 3s...`);
-      toast(`Serveur en cours de reveil, retry ${retryCount + 1}/${MAX_RETRIES}...`, 'warn');
-      await new Promise(r => setTimeout(r, 3000));
+    console.warn(`[API] ${endpoint} ECHEC: ${isTimeout?'Timeout':e.message}`);
+    if (retryCount < 2 && (isTimeout || e.message.includes('Failed to fetch') || e.message.includes('NetworkError'))) {
+      const delay = (retryCount + 1) * 5000;
+      console.log(`[API] Retry ${endpoint} dans ${delay/1000}s...`);
+      await new Promise(r => setTimeout(r, delay));
       return api(endpoint, options, retryCount + 1);
     }
-
     return null;
   }
+}
+
+// Appels API un par un (pas Promise.all) pour eviter de surcharger Render
+async function apiSequence(calls) {
+  const results = [];
+  for (const call of calls) {
+    const result = await api(call.endpoint, call.options || {});
+    results.push({ key: call.key, data: result });
+  }
+  return results;
 }
 
 // ============================
 // CALCULS TECHNIQUES
 // ============================
 function calcEMA(closes, period) {
-  const result = [closes[0]];
-  const k = 2 / (period + 1);
-  for (let i = 1; i < closes.length; i++) {
-    result.push(closes[i] * k + result[i - 1] * (1 - k));
-  }
-  return result;
+  const r = [closes[0]]; const k = 2 / (period + 1);
+  for (let i = 1; i < closes.length; i++) r.push(closes[i] * k + r[i-1] * (1 - k));
+  return r;
 }
-
 function calcRSI(closes, period = 14) {
   const rsi = new Array(closes.length).fill(50);
   if (closes.length < period + 1) return rsi;
-  let gainSum = 0, lossSum = 0;
-  for (let i = 1; i <= period; i++) {
-    const d = closes[i] - closes[i - 1];
-    if (d > 0) gainSum += d; else lossSum -= d;
-  }
-  let avgGain = gainSum / period;
-  let avgLoss = lossSum / period;
-  rsi[period] = 100 - 100 / (1 + avgGain / (avgLoss || 0.0001));
-  for (let i = period + 1; i < closes.length; i++) {
-    const d = closes[i] - closes[i - 1];
-    avgGain = (avgGain * (period - 1) + (d > 0 ? d : 0)) / period;
-    avgLoss = (avgLoss * (period - 1) + (d < 0 ? -d : 0)) / period;
-    rsi[i] = 100 - 100 / (1 + avgGain / (avgLoss || 0.0001));
+  let gs = 0, ls = 0;
+  for (let i = 1; i <= period; i++) { const d = closes[i]-closes[i-1]; if(d>0)gs+=d;else ls-=d; }
+  let ag = gs/period, al = ls/period;
+  rsi[period] = 100 - 100/(1+ag/(al||.0001));
+  for (let i = period+1; i < closes.length; i++) {
+    const d = closes[i]-closes[i-1];
+    ag = (ag*(period-1)+(d>0?d:0))/period;
+    al = (al*(period-1)+(d<0?-d:0))/period;
+    rsi[i] = 100-100/(1+ag/(al||.0001));
   }
   return rsi;
 }
@@ -353,64 +229,57 @@ function calcRSI(closes, period = 14) {
 // ============================
 // UTILITAIRES
 // ============================
-function fmt(n, d = 2) { return n != null ? Number(n).toFixed(d) : '---'; }
-function fmtPct(n) { return n != null ? (n >= 0 ? '+' : '') + Number(n).toFixed(2) + '%' : '---'; }
-function fmtTime(ts) {
-  if (!ts) return '---';
-  return new Date(ts * 1000).toLocaleString('fr-FR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
-}
-function fmtDateTime(ts) {
-  if (!ts) return '---';
-  return new Date(ts * 1000).toLocaleString('fr-FR');
-}
-
-function signalColor(s) {
-  if (s === 'BUY') return 'var(--buy)';
-  if (s === 'SELL') return 'var(--sell)';
-  return 'var(--hold)';
+function fmt(n,d=2){return n!=null?Number(n).toFixed(d):'---'}
+function fmtPct(n){return n!=null?(n>=0?'+':'')+Number(n).toFixed(2)+'%':'---'}
+function fmtTime(ts){if(!ts)return'---';return new Date(ts*1000).toLocaleString('fr-FR',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'})}
+function fmtDateTime(ts){if(!ts)return'---';return new Date(ts*1000).toLocaleString('fr-FR')}
+function signalColor(s){return s==='BUY'?'var(--buy)':s==='SELL'?'var(--sell)':'var(--hold)'}
+function signalBadge(s){
+  if(!s||s==='---')return'<span class="badge badge-hold"><i class="fas fa-minus text-xs"></i>---</span>';
+  const c=s==='BUY'?'badge-buy':s==='SELL'?'badge-sell':'badge-hold';
+  const i=s==='BUY'?'fa-arrow-up':s==='SELL'?'fa-arrow-down':'fa-minus';
+  return`<span class="badge ${c}"><i class="fas ${i} text-xs"></i>${s}</span>`;
 }
 
-function signalBadge(s) {
-  if (!s || s === '---') return '<span class="badge badge-hold"><i class="fas fa-minus text-xs"></i>---</span>';
-  const cls = s === 'BUY' ? 'badge-buy' : s === 'SELL' ? 'badge-sell' : 'badge-hold';
-  const icon = s === 'BUY' ? 'fa-arrow-up' : s === 'SELL' ? 'fa-arrow-down' : 'fa-minus';
-  return `<span class="badge ${cls}"><i class="fas ${icon} text-xs"></i>${s}</span>`;
+// Slot de donnee : affiche loading / erreur / valeur
+function slot(id, loader = true) {
+  return `<div class="data-slot" id="${id}">${loader ? '<span class="data-loading"><span class="mini-spin"></span>Chargement...</span>' : '<span class="text-muted mono">---</span>'}</div>`;
+}
+function fillSlot(id, html) {
+  const el = document.getElementById(id);
+  if (el) el.innerHTML = html;
+}
+function fillSlotError(id, endpoint) {
+  fillSlot(id, `<span class="data-error" onclick="retrySlot('${id}','${endpoint}')"><i class="fas fa-exclamation-circle"></i> Erreur - reessayer</span>`);
 }
 
-function loadingHTML(msg = 'Chargement en cours...') {
-  return `<div class="card loading-overlay"><div class="spinner"></div><p class="text-muted text-sm">${msg}</p><p class="text-muted text-xs">Le serveur peut mettre 30-60s a se reveiller</p></div>`;
+// Retry pour un slot individuel
+const slotRetryFns = {};
+function retrySlot(id, endpoint) {
+  fillSlot(id, '<span class="data-loading"><span class="mini-spin"></span>Chargement...</span>');
+  if (slotRetryFns[id]) slotRetryFns[id]();
 }
 
-// ============================
-// TOAST
-// ============================
-function toast(msg, type = 'info') {
+function toast(msg, type='info') {
   const el = document.createElement('div');
   el.className = `toast toast-${type}`;
-  const icons = { success: 'fa-check-circle', error: 'fa-exclamation-circle', info: 'fa-info-circle', warn: 'fa-exclamation-triangle' };
-  el.innerHTML = `<i class="fas ${icons[type] || icons.info}"></i> ${msg}`;
+  const icons = {success:'fa-check-circle',error:'fa-exclamation-circle',info:'fa-info-circle',warn:'fa-exclamation-triangle'};
+  el.innerHTML = `<i class="fas ${icons[type]||icons.info}"></i> ${msg}`;
   document.getElementById('toasts').appendChild(el);
-  setTimeout(() => el.remove(), 4000);
+  setTimeout(()=>el.remove(),4000);
 }
 
-// ============================
-// MODAL
-// ============================
-function showModal(title, content, actions = '') {
-  const root = document.getElementById('modal-root');
-  root.innerHTML = `
+function showModal(title, content, actions='') {
+  document.getElementById('modal-root').innerHTML=`
     <div class="modal-overlay" onclick="if(event.target===this)closeModal()">
       <div class="modal-content fade-in">
-        <div class="flex items-center justify-between mb-4">
-          <h3 class="font-bold text-lg">${title}</h3>
-          <button onclick="closeModal()" class="text-muted hover:text-fg text-lg"><i class="fas fa-times"></i></button>
-        </div>
+        <div class="flex items-center justify-between mb-4"><h3 class="font-bold text-lg">${title}</h3><button onclick="closeModal()" class="text-muted hover:text-fg text-lg"><i class="fas fa-times"></i></button></div>
         <div class="mb-5">${content}</div>
         <div class="flex justify-end gap-3">${actions}</div>
       </div>
     </div>`;
 }
-function closeModal() { document.getElementById('modal-root').innerHTML = ''; }
+function closeModal(){document.getElementById('modal-root').innerHTML=''}
 
 // ============================
 // NAVIGATION
@@ -423,6 +292,9 @@ document.querySelectorAll('.nav-item').forEach(item => {
     document.getElementById('sidebar').classList.remove('open');
   });
 });
+document.getElementById('menu-toggle').addEventListener('click', () => {
+  document.getElementById('sidebar').classList.toggle('open');
+});
 
 function navigateTo(page) {
   currentPage = page;
@@ -430,303 +302,339 @@ function navigateTo(page) {
   renderPage(page);
 }
 
-document.getElementById('menu-toggle').addEventListener('click', () => {
-  document.getElementById('sidebar').classList.toggle('open');
-});
-
-// ============================
-// PAGES
-// ============================
 function renderPage(page) {
   const main = document.getElementById('main-content');
-  const renderers = {
-    dashboard: renderDashboard,
-    chart: renderChart,
-    signal: renderSignal,
-    strategies: renderStrategies,
-    backtest: renderBacktest,
-    compare: renderCompare,
-    settings: renderSettings,
-    debug: renderDebug
-  };
+  const renderers = {dashboard:renderDashboard,chart:renderChart,signal:renderSignal,strategies:renderStrategies,backtest:renderBacktest,compare:renderCompare,settings:renderSettings,debug:renderDebug};
   const fn = renderers[page];
-  if (fn) {
-    main.innerHTML = '<div class="fade-in">' + fn() + '</div>';
-    initPage(page);
-  }
+  if (fn) { main.innerHTML = '<div class="fade-in">'+fn()+'</div>'; initPage(page); }
 }
 
 function initPage(page) {
-  const inits = {
-    dashboard: initDashboard,
-    chart: initChart,
-    signal: initSignal,
-    strategies: initStrategies,
-    backtest: initBacktest,
-    compare: initCompare,
-    settings: initSettings,
-    debug: initDebug
-  };
+  const inits = {dashboard:initDashboard,chart:initChart,signal:initSignal,strategies:initStrategies,backtest:initBacktest,compare:initCompare,settings:initSettings,debug:initDebug};
   const fn = inits[page];
   if (fn) fn();
 }
 
-// ============ DASHBOARD ============
+// ============================
+// REVEIL DU SERVEUR
+// ============================
+async function wakeServer() {
+  const overlay = document.getElementById('wake-overlay');
+  const statusEl = document.getElementById('wake-status');
+  const detailEl = document.getElementById('wake-detail');
+
+  statusEl.textContent = 'Connexion au serveur...';
+  detailEl.textContent = 'Le serveur peut mettre 30-60s a se reveiller';
+
+  // Premier ping : /version (leger)
+  let v = await api('/version');
+  if (v) {
+    serverAwake = true;
+    statusEl.textContent = 'Serveur en ligne !';
+    detailEl.textContent = 'Chargement des donnees...';
+    overlay.style.opacity = '0';
+    overlay.style.transition = 'opacity 0.5s';
+    setTimeout(() => overlay.remove(), 500);
+    return true;
+  }
+
+  // Deuxieme tentative
+  statusEl.textContent = 'Deuxieme tentative...';
+  v = await api('/version');
+  if (v) {
+    serverAwake = true;
+    statusEl.textContent = 'Serveur en ligne !';
+    overlay.style.opacity = '0';
+    overlay.style.transition = 'opacity 0.5s';
+    setTimeout(() => overlay.remove(), 500);
+    return true;
+  }
+
+  // Troisieme tentative
+  statusEl.textContent = 'Troisieme tentative...';
+  v = await api('/version');
+  if (v) {
+    serverAwake = true;
+    overlay.style.opacity = '0';
+    overlay.style.transition = 'opacity 0.5s';
+    setTimeout(() => overlay.remove(), 500);
+    return true;
+  }
+
+  statusEl.textContent = 'Serveur indisponible';
+  detailEl.textContent = 'Verifiez que le serveur Render est bien deploye';
+  document.getElementById('wake-bar-fill').style.background = 'var(--sell)';
+  return false;
+}
+
+// ============================
+// DASHBOARD
+// ============================
 function renderDashboard() {
   return `
     <div class="mb-6">
       <h1 class="font-display text-3xl font-bold tracking-tight">Tableau de bord</h1>
-      <p class="text-muted text-sm mt-1">Vue d'ensemble du terminal BCHUSDT</p>
+      <p class="text-muted text-sm mt-1">Vue d'ensemble BCHUSDT</p>
     </div>
     <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-5">
-      <div class="card"><div class="stat-label">Prix actuel</div><div class="stat-value text-accent mono" id="dash-price">---.--</div><div class="text-muted text-xs mt-2 mono" id="dash-price-time">---</div></div>
-      <div class="card"><div class="stat-label">Signal</div><div class="mt-2" id="dash-signal">${signalBadge('---')}</div><div class="text-muted text-xs mt-2" id="dash-signal-indicators">Chargement...</div></div>
-      <div class="card"><div class="stat-label">Strategie active</div><div class="stat-value text-[var(--fg)] text-xl mono" id="dash-strategy-name">---</div><div class="text-muted text-xs mt-2" id="dash-strategy-params">---</div></div>
+      <div class="card">
+        <div class="stat-label">Prix actuel</div>
+        ${slot('dash-price')}
+        <div class="text-muted text-xs mt-2 mono" id="dash-price-time">---</div>
+      </div>
+      <div class="card">
+        <div class="stat-label">Signal</div>
+        ${slot('dash-signal')}
+        <div class="text-muted text-xs mt-2" id="dash-signal-indicators">---</div>
+      </div>
+      <div class="card">
+        <div class="stat-label">Strategie active</div>
+        ${slot('dash-strategy-name')}
+        <div class="text-muted text-xs mt-2" id="dash-strategy-params">---</div>
+      </div>
     </div>
     <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-5">
-      <div class="card text-center"><div class="stat-label">Bougies</div><div class="stat-value text-lg mono" id="dash-candles">0</div></div>
-      <div class="card text-center"><div class="stat-label">Timeframe</div><div class="stat-value text-lg mono" id="dash-timeframe">---</div></div>
-      <div class="card text-center"><div class="stat-label">EMA Fast / Slow</div><div class="stat-value text-lg mono" id="dash-ema">--- / ---</div></div>
-      <div class="card text-center"><div class="stat-label">RSI</div><div class="stat-value text-lg mono" id="dash-rsi">---</div></div>
+      <div class="card text-center"><div class="stat-label">Bougies</div>${slot('dash-candles')}</div>
+      <div class="card text-center"><div class="stat-label">Timeframe</div>${slot('dash-timeframe')}</div>
+      <div class="card text-center"><div class="stat-label">EMA Fast / Slow</div>${slot('dash-ema')}</div>
+      <div class="card text-center"><div class="stat-label">RSI</div>${slot('dash-rsi')}</div>
     </div>
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
       <div class="card">
         <h3 class="font-semibold text-sm mb-3 flex items-center gap-2"><i class="fas fa-database text-accent"></i>Base de donnees</h3>
         <div class="space-y-2 text-sm">
-          <div class="flex justify-between"><span class="text-muted">Min</span><span class="mono" id="dash-db-min">---</span></div>
-          <div class="flex justify-between"><span class="text-muted">Max</span><span class="mono" id="dash-db-max">---</span></div>
-          <div class="flex justify-between"><span class="text-muted">Total</span><span class="mono" id="dash-db-count">---</span></div>
+          <div class="flex justify-between"><span class="text-muted">Min</span>${slot('dash-db-min')}</div>
+          <div class="flex justify-between"><span class="text-muted">Max</span>${slot('dash-db-max')}</div>
+          <div class="flex justify-between"><span class="text-muted">Total</span>${slot('dash-db-count')}</div>
         </div>
       </div>
       <div class="card">
         <h3 class="font-semibold text-sm mb-3 flex items-center gap-2"><i class="fas fa-sliders-h text-accent"></i>Configuration</h3>
         <div class="space-y-2 text-sm">
           <div class="flex justify-between"><span class="text-muted">Paire</span><span class="mono">BCHUSDT</span></div>
-          <div class="flex justify-between"><span class="text-muted">Historique</span><span class="mono" id="dash-cfg-history">---</span></div>
-          <div class="flex justify-between"><span class="text-muted">RSI Periode</span><span class="mono" id="dash-cfg-rsi">---</span></div>
-          <div class="flex justify-between"><span class="text-muted">Version</span><span class="mono" id="dash-cfg-version">---</span></div>
+          <div class="flex justify-between"><span class="text-muted">Historique</span>${slot('dash-cfg-hist')}</div>
+          <div class="flex justify-between"><span class="text-muted">RSI Periode</span>${slot('dash-cfg-rsi')}</div>
+          <div class="flex justify-between"><span class="text-muted">Version</span>${slot('dash-cfg-ver')}</div>
         </div>
       </div>
-    </div>
-  `;
+    </div>`;
 }
 
 async function initDashboard() {
-  const [price, signal, config, dbinfo, active, version, stats] = await Promise.all([
-    api('/price'), api('/signal'), api('/config'), api('/dbinfo'),
-    api('/active-strategy'), api('/version'), api('/stats')
-  ]);
-  if (price && !price.error) {
-    document.getElementById('dash-price').textContent = fmt(price.price, 4);
-    document.getElementById('dash-price-time').textContent = 'MAJ: ' + fmtTime(price.time);
-  }
-  if (signal && !signal.error) {
-    document.getElementById('dash-signal').innerHTML = signalBadge(signal.signal);
+  // Appels sequentiels pour eviter de surcharger Render
+  // 1. Signal (donne prix + EMA + RSI)
+  const sig = await api('/signal');
+  if (sig && !sig.error) {
+    fillSlot('dash-price', `<span class="stat-value text-accent mono">${fmt(sig.price,4)}</span>`);
+    document.getElementById('dash-price-time').textContent = 'MAJ: ' + fmtTime(sig.candle_time);
+    fillSlot('dash-signal', signalBadge(sig.signal));
     document.getElementById('dash-signal-indicators').innerHTML =
-      `EMA${signal.EMA_FAST ? 9 : '?'}: <span class="mono">${fmt(signal.EMA_FAST, 2)}</span> | EMA Slow: <span class="mono">${fmt(signal.EMA_SLOW, 2)}</span> | RSI: <span class="mono">${fmt(signal.rsi, 1)}</span>`;
-    document.getElementById('dash-ema').textContent = `${fmt(signal.EMA_FAST, 1)} / ${fmt(signal.EMA_SLOW, 1)}`;
-    document.getElementById('dash-rsi').textContent = fmt(signal.rsi, 1);
-    document.getElementById('dash-rsi').style.color = signal.rsi > 70 ? 'var(--sell)' : signal.rsi < 30 ? 'var(--buy)' : 'var(--fg)';
+      `EMA Fast: <span class="mono">${fmt(sig.EMA_FAST,2)}</span> | EMA Slow: <span class="mono">${fmt(sig.EMA_SLOW,2)}</span> | RSI: <span class="mono">${fmt(sig.rsi,1)}</span>`;
+    fillSlot('dash-ema', `<span class="mono font-semibold">${fmt(sig.EMA_FAST,1)} / ${fmt(sig.EMA_SLOW,1)}</span>`);
+    fillSlot('dash-rsi', `<span class="mono font-semibold" style="color:${sig.rsi>70?'var(--sell)':sig.rsi<30?'var(--buy)':'var(--fg)'}">${fmt(sig.rsi,1)}</span>`);
+    // Header
+    document.getElementById('hdr-price').textContent = fmt(sig.price,4);
+    document.getElementById('hdr-signal-dot').style.background = signalColor(sig.signal);
+    document.getElementById('hdr-signal-text').textContent = sig.signal;
+    document.getElementById('hdr-signal-text').style.color = signalColor(sig.signal);
+  } else {
+    fillSlotError('dash-price', '/signal');
+    fillSlotError('dash-signal', '/signal');
+    fillSlotError('dash-ema', '/signal');
+    fillSlotError('dash-rsi', '/signal');
+    slotRetryFns['dash-price'] = slotRetryFns['dash-signal'] = slotRetryFns['dash-ema'] = slotRetryFns['dash-rsi'] = () => initDashboard();
   }
-  if (active && !active.error) {
-    document.getElementById('dash-strategy-name').textContent = active.name;
+
+  // 2. Strategie active
+  const act = await api('/active-strategy');
+  if (act && !act.error) {
+    fillSlot('dash-strategy-name', `<span class="stat-value text-xl mono">${act.name}</span>`);
     document.getElementById('dash-strategy-params').innerHTML =
-      `EMA ${active.ema_fast}/${active.ema_slow}/${active.ema_trend} | RSI ${active.rsi_period} | SL ${active.stop_loss}% | TP ${active.take_profit}%`;
+      `EMA ${act.ema_fast}/${act.ema_slow}/${act.ema_trend} | RSI ${act.rsi_period} | SL ${act.stop_loss}% | TP ${act.take_profit}%`;
+  } else {
+    fillSlotError('dash-strategy-name', '/active-strategy');
+    slotRetryFns['dash-strategy-name'] = () => initDashboard();
   }
-  if (dbinfo) {
-    document.getElementById('dash-db-min').textContent = fmtDateTime(dbinfo.min_timestamp);
-    document.getElementById('dash-db-max').textContent = fmtDateTime(dbinfo.max_timestamp);
-    document.getElementById('dash-db-count').textContent = dbinfo.count;
-  }
-  if (config) {
-    document.getElementById('dash-timeframe').textContent = config.timeframe;
-    document.getElementById('dash-cfg-history').textContent = config.history_size;
-    document.getElementById('dash-cfg-rsi').textContent = config.rsi_period;
-  }
-  if (version) {
-    document.getElementById('dash-cfg-version').textContent = version.version;
-    document.getElementById('side-version').textContent = version.version;
-  }
+
+  // 3. Stats
+  const stats = await api('/stats');
   if (stats) {
-    document.getElementById('dash-candles').textContent = stats.stored_candles;
+    fillSlot('dash-candles', `<span class="mono font-semibold">${stats.stored_candles}</span>`);
     document.getElementById('side-candles').textContent = stats.stored_candles;
+  } else {
+    fillSlotError('dash-candles', '/stats');
+    slotRetryFns['dash-candles'] = () => initDashboard();
   }
+
+  // 4. Config
+  const cfg = await api('/config');
+  if (cfg) {
+    fillSlot('dash-timeframe', `<span class="mono font-semibold">${cfg.timeframe}</span>`);
+    fillSlot('dash-cfg-hist', `<span class="mono">${cfg.history_size}</span>`);
+    fillSlot('dash-cfg-rsi', `<span class="mono">${cfg.rsi_period}</span>`);
+  } else {
+    fillSlotError('dash-timeframe', '/config');
+    fillSlotError('dash-cfg-hist', '/config');
+    fillSlotError('dash-cfg-rsi', '/config');
+  }
+
+  // 5. DB Info
+  const dbi = await api('/dbinfo');
+  if (dbi) {
+    fillSlot('dash-db-min', `<span class="mono text-xs">${fmtDateTime(dbi.min_timestamp)}</span>`);
+    fillSlot('dash-db-max', `<span class="mono text-xs">${fmtDateTime(dbi.max_timestamp)}</span>`);
+    fillSlot('dash-db-count', `<span class="mono">${dbi.count}</span>`);
+  } else {
+    fillSlotError('dash-db-min', '/dbinfo');
+    fillSlotError('dash-db-max', '/dbinfo');
+    fillSlotError('dash-db-count', '/dbinfo');
+  }
+
+  // 6. Version
+  const ver = await api('/version');
+  if (ver) {
+    fillSlot('dash-cfg-ver', `<span class="mono">${ver.version}</span>`);
+    document.getElementById('side-version').textContent = ver.version;
+  } else {
+    fillSlotError('dash-cfg-ver', '/version');
+  }
+
+  // Header status
+  document.getElementById('hdr-status').style.background = sig ? 'var(--buy)' : 'var(--sell)';
+  document.getElementById('hdr-status-text').textContent = sig ? 'En ligne' : 'Hors ligne';
 }
 
-// ============ CHART ============
+// ============================
+// CHART
+// ============================
 function renderChart() {
   return `
     <div class="mb-5 flex items-center justify-between flex-wrap gap-3">
-      <div>
-        <h1 class="font-display text-3xl font-bold tracking-tight">Chart</h1>
-        <p class="text-muted text-sm mt-1">BCHUSDT avec indicateurs techniques</p>
-      </div>
+      <div><h1 class="font-display text-3xl font-bold tracking-tight">Chart</h1><p class="text-muted text-sm mt-1">BCHUSDT avec indicateurs</p></div>
       <div class="flex items-center gap-2">
-        <label class="text-muted text-xs">Strategie:</label>
-        <select id="chart-strategy-select" class="bg-[var(--bg3)] text-sm text-[var(--fg)] border border-[var(--border)] rounded-lg px-3 py-1.5 mono">
-          <option value="">Defaut</option>
-        </select>
+        <select id="chart-strategy-select" class="bg-[var(--bg3)] text-sm text-[var(--fg)] border border-[var(--border)] rounded-lg px-3 py-1.5 mono"><option value="">Defaut</option></select>
         <button onclick="loadChart()" class="btn btn-primary btn-sm"><i class="fas fa-chart-line"></i>Charger</button>
       </div>
     </div>
     <div id="chart-area">
-      ${loadingHTML('Chargement des donnees du chart...')}
-    </div>
-  `;
+      <div class="card text-center py-12"><i class="fas fa-chart-area text-4xl text-muted mb-3"></i><p class="text-muted">Cliquez sur Charger pour afficher le chart</p></div>
+    </div>`;
 }
 
 async function initChart() {
-  const strategies = await api('/strategies');
+  const strats = await api('/strategies');
   const sel = document.getElementById('chart-strategy-select');
-  if (strategies && sel) {
-    strategies.forEach(s => {
-      const opt = document.createElement('option');
-      opt.value = s.id; opt.textContent = s.name;
-      sel.appendChild(opt);
-    });
-  }
-  await loadChart();
+  if (strats && sel) strats.forEach(s => { const o = document.createElement('option'); o.value=s.id; o.textContent=s.name; sel.appendChild(o); });
 }
 
 async function loadChart() {
   const area = document.getElementById('chart-area');
-  if (area) area.innerHTML = loadingHTML('Chargement des bougies...');
+  area.innerHTML = '<div class="card text-center py-10"><div class="spinner mx-auto mb-3"></div><p class="text-muted">Chargement des bougies (peut prendre 30-60s)...</p></div>';
 
   const history = await api('/history');
   if (!history || history.length === 0) {
-    if (area) area.innerHTML = '<div class="card text-center py-10"><i class="fas fa-exclamation-triangle text-3xl text-hold mb-3"></i><p class="text-muted">Aucune donnee historique. Cliquez Refresh puis reessayez.</p></div>';
+    area.innerHTML = '<div class="card text-center py-10"><i class="fas fa-exclamation-triangle text-3xl text-hold mb-3"></i><p class="text-muted">Aucune donnee. Cliquez Refresh puis reessayez.</p></div>';
     return;
   }
 
-  let emaFast = 9, emaSlow = 20, emaTrend = 50, rsiPeriod = 14;
-  const stratSel = document.getElementById('chart-strategy-select');
-  if (stratSel && stratSel.value) {
-    const strat = await api('/strategy/' + stratSel.value);
-    if (strat && !strat.error) {
-      emaFast = strat.ema_fast; emaSlow = strat.ema_slow;
-      emaTrend = strat.ema_trend; rsiPeriod = strat.rsi_period;
-    }
+  let emaFast=9,emaSlow=20,emaTrend=50,rsiPeriod=14;
+  const sel = document.getElementById('chart-strategy-select');
+  if (sel && sel.value) {
+    const s = await api('/strategy/'+sel.value);
+    if (s && !s.error) { emaFast=s.ema_fast;emaSlow=s.ema_slow;emaTrend=s.ema_trend;rsiPeriod=s.rsi_period; }
   }
 
-  const sorted = [...history].sort((a, b) => a.timestamp - b.timestamp);
-  const closes = sorted.map(c => c.close);
-  const emaFastData = calcEMA(closes, emaFast);
-  const emaSlowData = calcEMA(closes, emaSlow);
-  const emaTrendData = calcEMA(closes, emaTrend);
-  const rsiData = calcRSI(closes, rsiPeriod);
+  const sorted = [...history].sort((a,b)=>a.timestamp-b.timestamp);
+  const closes = sorted.map(c=>c.close);
+  const efd=calcEMA(closes,emaFast), esd=calcEMA(closes,emaSlow), etd=calcEMA(closes,emaTrend), rd=calcRSI(closes,rsiPeriod);
 
-  const candleData = sorted.map(c => ({ time: c.timestamp, open: c.open, high: c.high, low: c.low, close: c.close }));
-  const emaFastLine = sorted.map((c, i) => ({ time: c.timestamp, value: emaFastData[i] }));
-  const emaSlowLine = sorted.map((c, i) => ({ time: c.timestamp, value: emaSlowData[i] }));
-  const emaTrendLine = sorted.map((c, i) => ({ time: c.timestamp, value: emaTrendData[i] }));
-  const rsiLine = sorted.map((c, i) => ({ time: c.timestamp, value: rsiData[i] }));
-  const volData = sorted.map(c => ({
-    time: c.timestamp, value: c.volume,
-    color: c.close >= c.open ? 'rgba(34,197,94,0.25)' : 'rgba(239,68,68,0.25)'
-  }));
+  const cd = sorted.map(c=>({time:c.timestamp,open:c.open,high:c.high,low:c.low,close:c.close}));
+  const efl = sorted.map((c,i)=>({time:c.timestamp,value:efd[i]}));
+  const esl = sorted.map((c,i)=>({time:c.timestamp,value:esd[i]}));
+  const etl = sorted.map((c,i)=>({time:c.timestamp,value:etd[i]}));
+  const rl = sorted.map((c,i)=>({time:c.timestamp,value:rd[i]}));
+  const vd = sorted.map(c=>({time:c.timestamp,value:c.volume,color:c.close>=c.open?'rgba(34,197,94,.25)':'rgba(239,68,68,.25)'}));
 
-  const markers = [];
-  for (let i = 1; i < sorted.length; i++) {
-    const pf = emaFastData[i-1], cf = emaFastData[i];
-    const ps = emaSlowData[i-1], cs = emaSlowData[i];
-    const rv = rsiData[i], tv = emaTrendData[i], p = closes[i];
-    if (pf <= ps && cf > cs && rv > 55 && p > tv)
-      markers.push({ time: sorted[i].timestamp, position: 'belowBar', color: '#22c55e', shape: 'arrowUp', text: 'BUY' });
-    else if (pf >= ps && cf < cs)
-      markers.push({ time: sorted[i].timestamp, position: 'aboveBar', color: '#ef4444', shape: 'arrowDown', text: 'SELL' });
+  const markers=[];
+  for(let i=1;i<sorted.length;i++){
+    if(efd[i-1]<=esd[i-1]&&efd[i]>esd[i]&&rd[i]>55&&closes[i]>etd[i])
+      markers.push({time:sorted[i].timestamp,position:'belowBar',color:'#22c55e',shape:'arrowUp',text:'BUY'});
+    else if(efd[i-1]>=esd[i-1]&&efd[i]<esd[i])
+      markers.push({time:sorted[i].timestamp,position:'aboveBar',color:'#ef4444',shape:'arrowDown',text:'SELL'});
   }
 
-  if (chartInstance) { chartInstance.remove(); chartInstance = null; }
-  if (rsiChartInstance) { rsiChartInstance.remove(); rsiChartInstance = null; }
+  if(chartInstance){chartInstance.remove();chartInstance=null}
+  if(rsiChartInstance){rsiChartInstance.remove();rsiChartInstance=null}
 
-  // Render chart HTML
   area.innerHTML = `
-    <div class="card mb-3" style="padding:8px;"><div id="trading-chart" style="height:450px;"></div></div>
-    <div class="card" style="padding:8px;">
-      <div class="flex items-center gap-3 mb-1 px-2">
-        <span class="text-muted text-xs font-semibold">RSI (${rsiPeriod})</span>
-        <span class="mono text-xs" id="chart-rsi-value">---</span>
-      </div>
-      <div id="rsi-chart" style="height:150px;"></div>
+    <div class="card mb-3" style="padding:8px"><div id="trading-chart" style="height:450px"></div></div>
+    <div class="card" style="padding:8px">
+      <div class="flex items-center gap-3 mb-1 px-2"><span class="text-muted text-xs font-semibold">RSI (${rsiPeriod})</span><span class="mono text-xs" id="chart-rsi-value">---</span></div>
+      <div id="rsi-chart" style="height:150px"></div>
     </div>
     <div class="mt-3 flex items-center gap-4 text-xs text-muted">
-      <span><span style="color:#10b981;">___</span> EMA Fast</span>
-      <span><span style="color:#f59e0b;">___</span> EMA Slow</span>
-      <span><span style="color:#8b5cf6;">___</span> EMA Trend</span>
-      <span><span style="color:#22c55e;">&#9650;</span> Buy</span>
-      <span><span style="color:#ef4444;">&#9660;</span> Sell</span>
-    </div>
-  `;
+      <span><span style="color:#10b981">___</span> EMA Fast</span>
+      <span><span style="color:#f59e0b">___</span> EMA Slow</span>
+      <span><span style="color:#8b5cf6">___</span> EMA Trend</span>
+    </div>`;
 
-  const chartContainer = document.getElementById('trading-chart');
-  chartInstance = LightweightCharts.createChart(chartContainer, {
-    width: chartContainer.clientWidth, height: 450,
-    layout: { background: { type: 'solid', color: 'transparent' }, textColor: '#5a6a82', fontSize: 11, fontFamily: 'JetBrains Mono' },
-    grid: { vertLines: { color: 'rgba(26,37,64,0.5)' }, horzLines: { color: 'rgba(26,37,64,0.5)' } },
-    crosshair: { mode: LightweightCharts.CrosshairMode.Normal },
-    rightPriceScale: { borderColor: 'rgba(26,37,64,0.8)' },
-    timeScale: { borderColor: 'rgba(26,37,64,0.8)', timeVisible: true },
-    handleScroll: { mouseWheel: true, pressedMouseMove: true },
-    handleScale: { axisPressedMouseMove: true, mouseWheel: true, pinch: true }
+  const cc = document.getElementById('trading-chart');
+  chartInstance = LightweightCharts.createChart(cc,{
+    width:cc.clientWidth,height:450,
+    layout:{background:{type:'solid',color:'transparent'},textColor:'#5a6a82',fontSize:11,fontFamily:'JetBrains Mono'},
+    grid:{vertLines:{color:'rgba(26,37,64,.5)'},horzLines:{color:'rgba(26,37,64,.5)'}},
+    crosshair:{mode:LightweightCharts.CrosshairMode.Normal},
+    rightPriceScale:{borderColor:'rgba(26,37,64,.8)'},
+    timeScale:{borderColor:'rgba(26,37,64,.8)',timeVisible:true},
+    handleScroll:{mouseWheel:true,pressedMouseMove:true},
+    handleScale:{axisPressedMouseMove:true,mouseWheel:true,pinch:true}
   });
 
-  const cs = chartInstance.addCandlestickSeries({
-    upColor: '#22c55e', downColor: '#ef4444',
-    borderUpColor: '#22c55e', borderDownColor: '#ef4444',
-    wickUpColor: '#22c55e80', wickDownColor: '#ef444480'
-  });
-  cs.setData(candleData);
-  if (markers.length > 0) cs.setMarkers(markers);
-
-  chartInstance.addLineSeries({ color: '#10b981', lineWidth: 1, title: `EMA${emaFast}` }).setData(emaFastLine);
-  chartInstance.addLineSeries({ color: '#f59e0b', lineWidth: 1, title: `EMA${emaSlow}` }).setData(emaSlowLine);
-  chartInstance.addLineSeries({ color: '#8b5cf6', lineWidth: 1, lineStyle: 2, title: `EMA${emaTrend}` }).setData(emaTrendLine);
-
-  const vs = chartInstance.addHistogramSeries({ priceFormat: { type: 'volume' }, priceScaleId: 'volume' });
-  chartInstance.priceScale('volume').applyOptions({ scaleMargins: { top: 0.85, bottom: 0 } });
-  vs.setData(volData);
+  const cs = chartInstance.addCandlestickSeries({upColor:'#22c55e',downColor:'#ef4444',borderUpColor:'#22c55e',borderDownColor:'#ef4444',wickUpColor:'#22c55e80',wickDownColor:'#ef444480'});
+  cs.setData(cd);
+  if(markers.length>0)cs.setMarkers(markers);
+  chartInstance.addLineSeries({color:'#10b981',lineWidth:1,title:`EMA${emaFast}`}).setData(efl);
+  chartInstance.addLineSeries({color:'#f59e0b',lineWidth:1,title:`EMA${emaSlow}`}).setData(esl);
+  chartInstance.addLineSeries({color:'#8b5cf6',lineWidth:1,lineStyle:2,title:`EMA${emaTrend}`}).setData(etl);
+  const vs = chartInstance.addHistogramSeries({priceFormat:{type:'volume'},priceScaleId:'volume'});
+  chartInstance.priceScale('volume').applyOptions({scaleMargins:{top:.85,bottom:0}});
+  vs.setData(vd);
   chartInstance.timeScale().fitContent();
 
-  // RSI
-  const rsiContainer = document.getElementById('rsi-chart');
-  rsiChartInstance = LightweightCharts.createChart(rsiContainer, {
-    width: rsiContainer.clientWidth, height: 150,
-    layout: { background: { type: 'solid', color: 'transparent' }, textColor: '#5a6a82', fontSize: 10, fontFamily: 'JetBrains Mono' },
-    grid: { vertLines: { color: 'rgba(26,37,64,0.3)' }, horzLines: { color: 'rgba(26,37,64,0.3)' } },
-    rightPriceScale: { borderColor: 'rgba(26,37,64,0.8)', scaleMargins: { top: 0.1, bottom: 0.1 } },
-    timeScale: { borderColor: 'rgba(26,37,64,0.8)', timeVisible: true, visible: false },
-    crosshair: { mode: LightweightCharts.CrosshairMode.Normal }
+  const rc = document.getElementById('rsi-chart');
+  rsiChartInstance = LightweightCharts.createChart(rc,{
+    width:rc.clientWidth,height:150,
+    layout:{background:{type:'solid',color:'transparent'},textColor:'#5a6a82',fontSize:10,fontFamily:'JetBrains Mono'},
+    grid:{vertLines:{color:'rgba(26,37,64,.3)'},horzLines:{color:'rgba(26,37,64,.3)'}},
+    rightPriceScale:{borderColor:'rgba(26,37,64,.8)',scaleMargins:{top:.1,bottom:.1}},
+    timeScale:{borderColor:'rgba(26,37,64,.8)',timeVisible:true,visible:false},
+    crosshair:{mode:LightweightCharts.CrosshairMode.Normal}
   });
-  rsiChartInstance.addLineSeries({ color: '#a78bfa', lineWidth: 1.5 }).setData(rsiLine);
-  rsiChartInstance.addLineSeries({ color: 'rgba(34,197,94,0.3)', lineWidth: 1, lineStyle: 2 })
-    .setData(sorted.map(c => ({ time: c.timestamp, value: 30 })));
-  rsiChartInstance.addLineSeries({ color: 'rgba(239,68,68,0.3)', lineWidth: 1, lineStyle: 2 })
-    .setData(sorted.map(c => ({ time: c.timestamp, value: 70 })));
+  rsiChartInstance.addLineSeries({color:'#a78bfa',lineWidth:1.5}).setData(rl);
+  rsiChartInstance.addLineSeries({color:'rgba(34,197,94,.3)',lineWidth:1,lineStyle:2}).setData(sorted.map(c=>({time:c.timestamp,value:30})));
+  rsiChartInstance.addLineSeries({color:'rgba(239,68,68,.3)',lineWidth:1,lineStyle:2}).setData(sorted.map(c=>({time:c.timestamp,value:70})));
   rsiChartInstance.timeScale().fitContent();
 
-  // Sync
-  chartInstance.timeScale().subscribeVisibleLogicalRangeChange(r => { if (r) rsiChartInstance.timeScale().setVisibleLogicalRange(r); });
-  rsiChartInstance.timeScale().subscribeVisibleLogicalRangeChange(r => { if (r) chartInstance.timeScale().setVisibleLogicalRange(r); });
+  chartInstance.timeScale().subscribeVisibleLogicalRangeChange(r=>{if(r)rsiChartInstance.timeScale().setVisibleLogicalRange(r)});
+  rsiChartInstance.timeScale().subscribeVisibleLogicalRangeChange(r=>{if(r)chartInstance.timeScale().setVisibleLogicalRange(r)});
 
-  const lastRSI = rsiData[rsiData.length - 1];
-  const rsiEl = document.getElementById('chart-rsi-value');
-  if (rsiEl) { rsiEl.textContent = fmt(lastRSI, 1); rsiEl.style.color = lastRSI > 70 ? 'var(--sell)' : lastRSI < 30 ? 'var(--buy)' : 'var(--fg)'; }
+  const lr = rd[rd.length-1];
+  const rEl = document.getElementById('chart-rsi-value');
+  if(rEl){rEl.textContent=fmt(lr,1);rEl.style.color=lr>70?'var(--sell)':lr<30?'var(--buy)':'var(--fg)'}
 
-  new ResizeObserver(() => {
-    chartInstance.applyOptions({ width: chartContainer.clientWidth });
-    rsiChartInstance.applyOptions({ width: rsiContainer.clientWidth });
-  }).observe(chartContainer);
+  new ResizeObserver(()=>{
+    chartInstance.applyOptions({width:cc.clientWidth});
+    rsiChartInstance.applyOptions({width:rc.clientWidth});
+  }).observe(cc);
 }
 
-// ============ SIGNAL ============
+// ============================
+// SIGNAL
+// ============================
 function renderSignal() {
   return `
-    <div class="mb-6">
-      <h1 class="font-display text-3xl font-bold tracking-tight">Signal de trading</h1>
-      <p class="text-muted text-sm mt-1">Analyse technique en temps reel</p>
-    </div>
-    <div id="signal-content">${loadingHTML('Recuperation du signal...')}</div>
-  `;
+    <div class="mb-6"><h1 class="font-display text-3xl font-bold tracking-tight">Signal de trading</h1><p class="text-muted text-sm mt-1">Analyse technique en temps reel</p></div>
+    <div id="signal-content"><div class="card text-center py-10"><div class="spinner mx-auto mb-3"></div><p class="text-muted">Recuperation du signal...</p><p class="text-muted text-xs mt-1">Le serveur peut mettre 30-60s</p></div></div>`;
 }
 
 async function initSignal() {
@@ -737,440 +645,361 @@ async function initSignal() {
     container.innerHTML = `
       <div class="card text-center py-10">
         <i class="fas fa-exclamation-triangle text-3xl text-hold mb-3"></i>
-        <p class="text-muted mb-3">Impossible de recuperer le signal</p>
-        <p class="text-muted text-xs mb-4">${signal ? signal.error : 'Le serveur est peut-etre en veille. Patientez 30-60s puis reessayez.'}</p>
+        <p class="text-muted mb-2">Impossible de recuperer le signal</p>
+        <p class="text-muted text-xs mb-4">${signal ? (signal.error||'Erreur inconnue') : 'Le serveur est peut-etre en veille. Patientez puis reessayez.'}</p>
         <button onclick="initSignal()" class="btn btn-primary btn-sm"><i class="fas fa-redo"></i>Reessayer</button>
       </div>`;
     return;
   }
 
   const indicators = [
-    { label: 'Prix', value: fmt(signal.price, 4), icon: 'fa-dollar-sign', color: 'var(--accent)' },
-    { label: 'EMA Fast', value: fmt(signal.EMA_FAST, 4), icon: 'fa-bolt', color: '#10b981' },
-    { label: 'EMA Slow', value: fmt(signal.EMA_SLOW, 4), icon: 'fa-wave-square', color: '#f59e0b' },
-    { label: 'RSI', value: fmt(signal.rsi, 2), icon: 'fa-chart-bar', color: signal.rsi > 70 ? 'var(--sell)' : signal.rsi < 30 ? 'var(--buy)' : '#8b5cf6' }
+    {label:'Prix',value:fmt(signal.price,4),icon:'fa-dollar-sign',color:'var(--accent)'},
+    {label:'EMA Fast',value:fmt(signal.EMA_FAST,4),icon:'fa-bolt',color:'#10b981'},
+    {label:'EMA Slow',value:fmt(signal.EMA_SLOW,4),icon:'fa-wave-square',color:'#f59e0b'},
+    {label:'RSI',value:fmt(signal.rsi,2),icon:'fa-chart-bar',color:signal.rsi>70?'var(--sell)':signal.rsi<30?'var(--buy)':'#8b5cf6'}
   ];
 
   container.innerHTML = `
-    <div class="card text-center py-8" style="border-color: ${signalColor(signal.signal)}30;">
+    <div class="card text-center py-8" style="border-color:${signalColor(signal.signal)}30">
       <div class="text-muted text-xs uppercase tracking-widest mb-3">Signal actuel</div>
-      <div class="text-6xl font-bold mono mb-3" style="color: ${signalColor(signal.signal)};">${signal.signal}</div>
+      <div class="text-6xl font-bold mono mb-3" style="color:${signalColor(signal.signal)}">${signal.signal}</div>
       <div class="flex items-center justify-center gap-2">
-        <div class="pulse-dot" style="background: ${signalColor(signal.signal)};"></div>
+        <div class="pulse-dot" style="background:${signalColor(signal.signal)}"></div>
         <span class="text-sm text-muted">${signal.pair} | ${fmtTime(signal.candle_time)}</span>
       </div>
     </div>
-
     <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-      ${indicators.map(ind => `
-        <div class="card text-center">
-          <i class="fas ${ind.icon} text-2xl mb-2" style="color: ${ind.color};"></i>
-          <div class="mono font-bold text-xl" style="color: ${ind.color};">${ind.value}</div>
-          <div class="stat-label">${ind.label}</div>
-        </div>
-      `).join('')}
+      ${indicators.map(i=>`<div class="card text-center"><i class="fas ${i.icon} text-2xl mb-2" style="color:${i.color}"></i><div class="mono font-bold text-xl" style="color:${i.color}">${i.value}</div><div class="stat-label">${i.label}</div></div>`).join('')}
     </div>
-
     <div class="card">
       <h3 class="font-semibold text-sm mb-4 flex items-center gap-2"><i class="fas fa-brain text-accent"></i>Logique de decision</h3>
       <div class="space-y-3 text-sm">
         <div class="flex items-start gap-3">
-          <div class="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0" style="background: ${signal.EMA_FAST > signal.EMA_SLOW ? 'rgba(34,197,94,0.2)' : 'rgba(239,68,68,0.2)'};">
-            <i class="fas ${signal.EMA_FAST > signal.EMA_SLOW ? 'fa-check text-buy' : 'fa-times text-sell'} text-xs"></i>
+          <div class="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0" style="background:${signal.EMA_FAST>signal.EMA_SLOW?'rgba(34,197,94,.2)':'rgba(239,68,68,.2)'}">
+            <i class="fas ${signal.EMA_FAST>signal.EMA_SLOW?'fa-check text-buy':'fa-times text-sell'} text-xs"></i>
           </div>
-          <div>
-            <div class="font-medium">EMA Fast ${signal.EMA_FAST > signal.EMA_SLOW ? '>' : '<'} EMA Slow</div>
-            <div class="text-muted text-xs">Fast = ${fmt(signal.EMA_FAST, 2)} vs Slow = ${fmt(signal.EMA_SLOW, 2)}</div>
-          </div>
+          <div><div class="font-medium">EMA Fast ${signal.EMA_FAST>signal.EMA_SLOW?'>':'<'} EMA Slow</div><div class="text-muted text-xs">Fast = ${fmt(signal.EMA_FAST,2)} vs Slow = ${fmt(signal.EMA_SLOW,2)}</div></div>
         </div>
         <div class="flex items-start gap-3">
-          <div class="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0" style="background: ${signal.rsi < 70 ? 'rgba(34,197,94,0.2)' : 'rgba(239,68,68,0.2)'};">
-            <i class="fas ${signal.rsi < 70 ? 'fa-check text-buy' : 'fa-times text-sell'} text-xs"></i>
+          <div class="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0" style="background:${signal.rsi<70?'rgba(34,197,94,.2)':'rgba(239,68,68,.2)'}">
+            <i class="fas ${signal.rsi<70?'fa-check text-buy':'fa-times text-sell'} text-xs"></i>
           </div>
-          <div>
-            <div class="font-medium">RSI ${signal.rsi < 70 ? 'inferieur a 70' : 'superieur a 70 (surachte)'}</div>
-            <div class="text-muted text-xs">RSI = ${fmt(signal.rsi, 2)}</div>
-          </div>
+          <div><div class="font-medium">RSI ${signal.rsi<70?'inferieur a 70':'superieur a 70 (surachte)'}</div><div class="text-muted text-xs">RSI = ${fmt(signal.rsi,2)}</div></div>
         </div>
-        <div class="mt-3 p-3 rounded-lg" style="background: ${signalColor(signal.signal)}10; border: 1px solid ${signalColor(signal.signal)}30;">
-          <div class="font-semibold" style="color: ${signalColor(signal.signal)};">
-            ${signal.signal === 'BUY' ? 'EMA fast > slow + RSI < 70 => Signal d\'achat' :
-              signal.signal === 'SELL' ? 'EMA fast < slow => Signal de vente' :
-              'Conditions mixtes => Conserver la position'}
+        <div class="mt-3 p-3 rounded-lg" style="background:${signalColor(signal.signal)}10;border:1px solid ${signalColor(signal.signal)}30">
+          <div class="font-semibold" style="color:${signalColor(signal.signal)}">
+            ${signal.signal==='BUY'?'EMA fast > slow + RSI < 70 => Achat':signal.signal==='SELL'?'EMA fast < slow => Vente':'Conditions mixtes => Conserver'}
           </div>
         </div>
       </div>
     </div>
+    <div class="card"><h3 class="font-semibold text-sm mb-3 flex items-center gap-2"><i class="fas fa-code text-accent"></i>Reponse API</h3>
+      <pre class="mono text-xs text-muted overflow-x-auto p-3 rounded-lg" style="background:var(--bg)">${JSON.stringify(signal,null,2)}</pre>
+    </div>`;
 
-    <div class="card">
-      <h3 class="font-semibold text-sm mb-3 flex items-center gap-2"><i class="fas fa-code text-accent"></i>Reponse API brute</h3>
-      <pre class="mono text-xs text-muted overflow-x-auto p-3 rounded-lg" style="background:var(--bg);">${JSON.stringify(signal, null, 2)}</pre>
-    </div>
-  `;
+  // Mettre a jour le header aussi
+  document.getElementById('hdr-price').textContent = fmt(signal.price,4);
+  document.getElementById('hdr-signal-dot').style.background = signalColor(signal.signal);
+  document.getElementById('hdr-signal-text').textContent = signal.signal;
+  document.getElementById('hdr-signal-text').style.color = signalColor(signal.signal);
+  document.getElementById('hdr-status').style.background = 'var(--buy)';
+  document.getElementById('hdr-status-text').textContent = 'En ligne';
 }
 
-// ============ STRATEGIES ============
+// ============================
+// STRATEGIES
+// ============================
 function renderStrategies() {
-  return `
-    <div class="mb-6"><h1 class="font-display text-3xl font-bold tracking-tight">Strategies</h1><p class="text-muted text-sm mt-1">Gestion des strategies de trading</p></div>
-    <div id="strategies-content">${loadingHTML('Chargement des strategies...')}</div>
-  `;
+  return `<div class="mb-6"><h1 class="font-display text-3xl font-bold tracking-tight">Strategies</h1><p class="text-muted text-sm mt-1">Gestion des strategies</p></div>
+    <div id="strategies-content"><div class="card text-center py-10"><div class="spinner mx-auto mb-3"></div><p class="text-muted">Chargement...</p></div></div>`;
 }
 
 async function initStrategies() {
   const container = document.getElementById('strategies-content');
-  const [strategies, active] = await Promise.all([api('/strategies'), api('/active-strategy')]);
+  const strats = await api('/strategies');
+  const active = await api('/active-strategy');
 
-  if (!strategies || strategies.length === 0) {
-    container.innerHTML = '<div class="card text-center py-10"><i class="fas fa-layer-group text-3xl text-muted mb-3"></i><p class="text-muted">Aucune strategie trouvee</p></div>';
+  if (!strats || strats.length===0) {
+    container.innerHTML='<div class="card text-center py-10"><i class="fas fa-layer-group text-3xl text-muted mb-3"></i><p class="text-muted">Aucune strategie</p></div>';
     return;
   }
 
-  const activeId = active && !active.error ? active.id : null;
+  const activeId = active&&!active.error?active.id:null;
   let html = '<div class="grid gap-4">';
 
-  for (const s of strategies) {
-    const isActive = s.id === activeId;
-    const detail = await api('/strategy/' + s.id);
-    if (!detail || detail.error) continue;
+  for (const s of strats) {
+    const isActive = s.id===activeId;
+    const d = await api('/strategy/'+s.id);
+    if(!d||d.error)continue;
 
-    html += `
-      <div class="card ${isActive ? 'ring-1 ring-[var(--accent)]' : ''}" style="${isActive ? 'border-color: var(--accent);' : ''}">
-        <div class="flex items-start justify-between flex-wrap gap-3">
-          <div class="flex items-center gap-3">
-            <div class="w-10 h-10 rounded-lg flex items-center justify-center" style="background: ${isActive ? 'rgba(16,185,129,0.15)' : 'var(--bg3)'};">
-              <i class="fas fa-layer-group ${isActive ? 'text-accent' : 'text-muted'}"></i>
-            </div>
-            <div>
-              <div class="font-bold flex items-center gap-2">${detail.name} ${isActive ? '<span class="badge badge-buy text-[10px]">ACTIVE</span>' : ''}</div>
-              <div class="text-muted text-xs mono">ID: ${detail.id}</div>
-            </div>
+    html+=`<div class="card ${isActive?'ring-1 ring-[var(--accent)]':''}" style="${isActive?'border-color:var(--accent)':''}">
+      <div class="flex items-start justify-between flex-wrap gap-3">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-lg flex items-center justify-center" style="background:${isActive?'rgba(16,185,129,.15)':'var(--bg3)'}">
+            <i class="fas fa-layer-group ${isActive?'text-accent':'text-muted'}"></i>
           </div>
-          <div class="flex items-center gap-2 flex-wrap">
-            ${!isActive ? `<button onclick="setActiveStrategy(${detail.id})" class="btn btn-primary btn-sm"><i class="fas fa-play"></i>Activer</button>` : ''}
-            <button onclick="cloneStrategy(${detail.id})" class="btn btn-secondary btn-sm"><i class="fas fa-copy"></i>Cloner</button>
-            ${!isActive ? `<button onclick="deleteStrategy(${detail.id}, '${detail.name}')" class="btn btn-danger btn-sm"><i class="fas fa-trash"></i></button>` : ''}
-          </div>
+          <div><div class="font-bold flex items-center gap-2">${d.name} ${isActive?'<span class="badge badge-buy text-[10px]">ACTIVE</span>':''}</div><div class="text-muted text-xs mono">ID: ${d.id}</div></div>
         </div>
-        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 mt-4 pt-4 border-t border-[var(--border)]">
-          <div><div class="stat-label">EMA Fast</div><div class="mono font-semibold">${detail.ema_fast}</div></div>
-          <div><div class="stat-label">EMA Slow</div><div class="mono font-semibold">${detail.ema_slow}</div></div>
-          <div><div class="stat-label">EMA Trend</div><div class="mono font-semibold">${detail.ema_trend}</div></div>
-          <div><div class="stat-label">RSI</div><div class="mono font-semibold">${detail.rsi_period} / min ${detail.rsi_min}</div></div>
-          <div><div class="stat-label">SL / TP</div><div class="mono font-semibold text-sell">${detail.stop_loss}% / <span class="text-buy">${detail.take_profit}%</span></div></div>
+        <div class="flex items-center gap-2 flex-wrap">
+          ${!isActive?`<button onclick="setActiveStrategy(${d.id})" class="btn btn-primary btn-sm"><i class="fas fa-play"></i>Activer</button>`:''}
+          <button onclick="cloneStrategy(${d.id})" class="btn btn-secondary btn-sm"><i class="fas fa-copy"></i>Cloner</button>
+          ${!isActive?`<button onclick="deleteStrategy(${d.id},'${d.name}')" class="btn btn-danger btn-sm"><i class="fas fa-trash"></i></button>`:''}
         </div>
-      </div>`;
-  }
-  html += '</div>';
-  container.innerHTML = html;
-}
-
-async function setActiveStrategy(id) {
-  const r = await api('/active-strategy/' + id);
-  if (r && r.success) { toast('Strategie activee', 'success'); initStrategies(); }
-  else toast('Erreur activation', 'error');
-}
-
-async function cloneStrategy(id) {
-  const r = await api('/strategy/' + id + '/clone', { method: 'POST' });
-  if (r && r.success) { toast('Strategie clonee (ID: ' + r.new_strategy_id + ')', 'success'); initStrategies(); }
-  else toast('Erreur clonage', 'error');
-}
-
-function deleteStrategy(id, name) {
-  showModal('Confirmer la suppression',
-    `<p class="text-sm">Supprimer <strong>${name}</strong> (ID: ${id}) ?</p>`,
-    `<button onclick="closeModal()" class="btn btn-secondary">Annuler</button>
-     <button onclick="confirmDeleteStrategy(${id})" class="btn btn-danger"><i class="fas fa-trash"></i>Supprimer</button>`);
-}
-
-async function confirmDeleteStrategy(id) {
-  closeModal();
-  const r = await api('/strategy/' + id + '/delete');
-  if (r && r.success) { toast('Strategie supprimee', 'success'); initStrategies(); }
-  else toast('Erreur suppression', 'error');
-}
-
-// ============ BACKTEST ============
-function renderBacktest() {
-  return `
-    <div class="mb-6 flex items-center justify-between flex-wrap gap-3">
-      <div><h1 class="font-display text-3xl font-bold tracking-tight">Backtest</h1><p class="text-muted text-sm mt-1">Simulation historique</p></div>
-      <div class="flex items-center gap-2">
-        <select id="bt-strategy-select" class="bg-[var(--bg3)] text-sm text-[var(--fg)] border border-[var(--border)] rounded-lg px-3 py-1.5 mono">
-          <option value="">Defaut</option>
-        </select>
-        <button onclick="runBacktest()" class="btn btn-primary"><i class="fas fa-play"></i>Lancer</button>
       </div>
-    </div>
-    <div id="backtest-content">
-      <div class="card text-center py-12"><i class="fas fa-flask text-4xl text-muted mb-3"></i><p class="text-muted">Cliquez sur Lancer pour executer le backtest</p></div>
-    </div>
-  `;
+      <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 mt-4 pt-4 border-t border-[var(--border)]">
+        <div><div class="stat-label">EMA Fast</div><div class="mono font-semibold">${d.ema_fast}</div></div>
+        <div><div class="stat-label">EMA Slow</div><div class="mono font-semibold">${d.ema_slow}</div></div>
+        <div><div class="stat-label">EMA Trend</div><div class="mono font-semibold">${d.ema_trend}</div></div>
+        <div><div class="stat-label">RSI</div><div class="mono font-semibold">${d.rsi_period}/min${d.rsi_min}</div></div>
+        <div><div class="stat-label">SL / TP</div><div class="mono font-semibold"><span class="text-sell">${d.stop_loss}%</span> / <span class="text-buy">${d.take_profit}%</span></div></div>
+      </div>
+    </div>`;
+  }
+  html+='</div>';
+  container.innerHTML=html;
 }
 
-async function initBacktest() {
-  const strategies = await api('/strategies');
-  const sel = document.getElementById('bt-strategy-select');
-  if (strategies && sel) strategies.forEach(s => { const o = document.createElement('option'); o.value = s.id; o.textContent = s.name; sel.appendChild(o); });
+async function setActiveStrategy(id){const r=await api('/active-strategy/'+id);if(r&&r.success){toast('Strategie activee','success');initStrategies()}else toast('Erreur activation','error')}
+async function cloneStrategy(id){const r=await api('/strategy/'+id+'/clone',{method:'POST'});if(r&&r.success){toast('Clonee (ID:'+r.new_strategy_id+')','success');initStrategies()}else toast('Erreur clonage','error')}
+function deleteStrategy(id,name){showModal('Supprimer',`<p class="text-sm">Supprimer <strong>${name}</strong> ?</p>`,`<button onclick="closeModal()" class="btn btn-secondary">Annuler</button><button onclick="confirmDelete(${id})" class="btn btn-danger"><i class="fas fa-trash"></i>Supprimer</button>`)}
+async function confirmDelete(id){closeModal();const r=await api('/strategy/'+id+'/delete');if(r&&r.success){toast('Supprimee','success');initStrategies()}else toast('Erreur','error')}
+
+// ============================
+// BACKTEST
+// ============================
+function renderBacktest() {
+  return `<div class="mb-6 flex items-center justify-between flex-wrap gap-3">
+    <div><h1 class="font-display text-3xl font-bold tracking-tight">Backtest</h1><p class="text-muted text-sm mt-1">Simulation historique</p></div>
+    <div class="flex items-center gap-2">
+      <select id="bt-sel" class="bg-[var(--bg3)] text-sm text-[var(--fg)] border border-[var(--border)] rounded-lg px-3 py-1.5 mono"><option value="">Defaut</option></select>
+      <button onclick="runBacktest()" class="btn btn-primary"><i class="fas fa-play"></i>Lancer</button>
+    </div>
+  </div>
+  <div id="backtest-content"><div class="card text-center py-12"><i class="fas fa-flask text-4xl text-muted mb-3"></i><p class="text-muted">Cliquez sur Lancer</p></div></div>`;
 }
+
+async function initBacktest(){const s=await api('/strategies');const sel=document.getElementById('bt-sel');if(s&&sel)s.forEach(x=>{const o=document.createElement('option');o.value=x.id;o.textContent=x.name;sel.appendChild(o)})}
 
 async function runBacktest() {
-  const sel = document.getElementById('bt-strategy-select');
-  const endpoint = sel && sel.value ? '/backtest/' + sel.value : '/backtest';
-  document.getElementById('backtest-content').innerHTML = loadingHTML('Execution du backtest (peut prendre 30-60s)...');
-
-  const result = await api(endpoint);
-  if (!result || result.error) {
-    document.getElementById('backtest-content').innerHTML = `
-      <div class="card text-center py-10">
-        <i class="fas fa-exclamation-triangle text-3xl text-hold mb-3"></i>
-        <p class="text-muted">Erreur: ${result ? result.error : 'Serveur indisponible'}</p>
-        <button onclick="runBacktest()" class="btn btn-primary btn-sm mt-3"><i class="fas fa-redo"></i>Reessayer</button>
-      </div>`;
+  const sel=document.getElementById('bt-sel');
+  const endpoint=sel&&sel.value?'/backtest/'+sel.value:'/backtest';
+  document.getElementById('backtest-content').innerHTML='<div class="card text-center py-10"><div class="spinner mx-auto mb-3"></div><p class="text-muted">Backtest en cours (30-90s)...</p></div>';
+  const result=await api(endpoint);
+  if(!result||result.error){
+    document.getElementById('backtest-content').innerHTML=`<div class="card text-center py-10"><i class="fas fa-exclamation-triangle text-3xl text-hold mb-3"></i><p class="text-muted">Erreur: ${result?result.error:'Serveur indisponible'}</p><button onclick="runBacktest()" class="btn btn-primary btn-sm mt-3"><i class="fas fa-redo"></i>Reessayer</button></div>`;
     return;
   }
   renderBacktestResult(result);
 }
 
 function renderBacktestResult(r) {
-  const pos = r.profit >= 0;
-  document.getElementById('backtest-content').innerHTML = `
+  const pos=r.profit>=0;
+  document.getElementById('backtest-content').innerHTML=`
     <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-5">
       <div class="card text-center"><div class="stat-label">Capital initial</div><div class="mono font-bold text-xl">$${fmt(r.capital_start)}</div></div>
-      <div class="card text-center"><div class="stat-label">Capital final</div><div class="mono font-bold text-xl" style="color:${pos?'var(--buy)':'var(--sell)'};">$${fmt(r.capital_end)}</div></div>
-      <div class="card text-center"><div class="stat-label">Profit</div><div class="mono font-bold text-xl" style="color:${pos?'var(--buy)':'var(--sell)'};">${fmtPct(r.profit_pct)}</div><div class="mono text-sm" style="color:${pos?'var(--buy)':'var(--sell)'};">$${fmt(r.profit)}</div></div>
-      <div class="card text-center"><div class="stat-label">Win Rate</div><div class="mono font-bold text-xl">${fmt(r.win_rate,1)}%</div><div class="text-xs text-muted">${r.wins}W / ${r.losses}L</div></div>
+      <div class="card text-center"><div class="stat-label">Capital final</div><div class="mono font-bold text-xl" style="color:${pos?'var(--buy)':'var(--sell)'}">$${fmt(r.capital_end)}</div></div>
+      <div class="card text-center"><div class="stat-label">Profit</div><div class="mono font-bold text-xl" style="color:${pos?'var(--buy)':'var(--sell)'}">${fmtPct(r.profit_pct)}</div><div class="mono text-sm" style="color:${pos?'var(--buy)':'var(--sell)'}">$${fmt(r.profit)}</div></div>
+      <div class="card text-center"><div class="stat-label">Win Rate</div><div class="mono font-bold text-xl">${fmt(r.win_rate,1)}%</div><div class="text-xs text-muted">${r.wins}W/${r.losses}L</div></div>
     </div>
-    <div class="card mb-5">
-      <div class="flex items-center justify-between mb-2"><span class="text-sm font-medium">Performance</span><span class="mono text-sm" style="color:${pos?'var(--buy)':'var(--sell)'};">${fmtPct(r.profit_pct)}</span></div>
-      <div class="progress-bar"><div class="progress-fill" style="width:${Math.min(Math.max(r.profit_pct+10,0),100)}%;background:${pos?'var(--buy)':'var(--sell)'};"></div></div>
+    <div class="card mb-5"><div class="flex items-center justify-between mb-2"><span class="text-sm font-medium">Performance</span><span class="mono text-sm" style="color:${pos?'var(--buy)':'var(--sell)'}">${fmtPct(r.profit_pct)}</span></div>
+      <div class="progress-bar"><div class="progress-fill" style="width:${Math.min(Math.max(r.profit_pct+10,0),100)}%;background:${pos?'var(--buy)':'var(--sell)'}"></div></div>
     </div>
-    ${r.strategy_name?`<div class="mb-4 text-sm text-muted">Strategie: <span class="text-accent font-semibold">${r.strategy_name}</span> (ID: ${r.strategy_id})</div>`:''}
-    <div class="card">
-      <h3 class="font-semibold text-sm mb-4 flex items-center gap-2"><i class="fas fa-list text-accent"></i>Historique des trades <span class="badge badge-hold text-[10px]">${r.trades_count} trades</span></h3>
-      ${r.trades&&r.trades.length>0?`
-        <div class="overflow-x-auto"><table>
-          <thead><tr><th>#</th><th>Entree</th><th>Prix achat</th><th>Sortie</th><th>Prix vente</th><th>Raison</th><th>Capital</th><th>P&L</th></tr></thead>
-          <tbody>${r.trades.map(t=>{const w=t.profit>=0;return`<tr>
-            <td class="mono text-muted">${t.trade}</td>
-            <td class="mono text-xs">${fmtTime(t.buy_time)}</td>
-            <td class="mono">${fmt(t.buy_price,4)}</td>
-            <td class="mono text-xs">${fmtTime(t.sell_time)}</td>
-            <td class="mono">${fmt(t.sell_price,4)}</td>
-            <td><span class="badge ${t.exit_reason==='STOP_LOSS'?'badge-sell':t.exit_reason==='TAKE_PROFIT'?'badge-buy':'badge-hold'} text-[10px]">${t.exit_reason}</span></td>
-            <td class="mono">$${fmt(t.capital_after)}</td>
-            <td class="mono font-semibold" style="color:${w?'var(--buy)':'var(--sell)'};">${fmtPct(t.profit_pct)}</td>
-          </tr>`;}).join('')}</tbody>
-        </table></div>
-      `:'<p class="text-muted text-sm text-center py-6">Aucun trade genere</p>'}
-    </div>
-  `;
+    ${r.strategy_name?`<div class="mb-4 text-sm text-muted">Strategie: <span class="text-accent font-semibold">${r.strategy_name}</span> (ID:${r.strategy_id})</div>`:''}
+    <div class="card"><h3 class="font-semibold text-sm mb-4 flex items-center gap-2"><i class="fas fa-list text-accent"></i>Trades <span class="badge badge-hold text-[10px]">${r.trades_count}</span></h3>
+    ${r.trades&&r.trades.length>0?`<div class="overflow-x-auto"><table><thead><tr><th>#</th><th>Entree</th><th>Prix</th><th>Sortie</th><th>Prix</th><th>Raison</th><th>Capital</th><th>P&L</th></tr></thead>
+    <tbody>${r.trades.map(t=>{const w=t.profit>=0;return`<tr><td class="mono text-muted">${t.trade}</td><td class="mono text-xs">${fmtTime(t.buy_time)}</td><td class="mono">${fmt(t.buy_price,4)}</td><td class="mono text-xs">${fmtTime(t.sell_time)}</td><td class="mono">${fmt(t.sell_price,4)}</td>
+    <td><span class="badge ${t.exit_reason==='STOP_LOSS'?'badge-sell':t.exit_reason==='TAKE_PROFIT'?'badge-buy':'badge-hold'} text-[10px]">${t.exit_reason}</span></td>
+    <td class="mono">$${fmt(t.capital_after)}</td><td class="mono font-semibold" style="color:${w?'var(--buy)':'var(--sell)'}">${fmtPct(t.profit_pct)}</td></tr>`}).join('')}</tbody></table></div>`
+    :'<p class="text-muted text-sm text-center py-6">Aucun trade</p>'}</div>`;
 }
 
-// ============ COMPARATIF ============
+// ============================
+// COMPARATIF
+// ============================
 function renderCompare() {
-  return `
-    <div class="mb-6 flex items-center justify-between flex-wrap gap-3">
-      <div><h1 class="font-display text-3xl font-bold tracking-tight">Comparatif</h1><p class="text-muted text-sm mt-1">Comparaison des strategies</p></div>
-      <button onclick="runCompare()" class="btn btn-primary"><i class="fas fa-balance-scale"></i>Comparer</button>
-    </div>
-    <div id="compare-content">
-      <div class="card text-center py-12"><i class="fas fa-balance-scale text-4xl text-muted mb-3"></i><p class="text-muted">Cliquez sur Comparer pour lancer l'analyse</p></div>
-    </div>
-  `;
+  return `<div class="mb-6 flex items-center justify-between flex-wrap gap-3">
+    <div><h1 class="font-display text-3xl font-bold tracking-tight">Comparatif</h1><p class="text-muted text-sm mt-1">Comparaison des strategies</p></div>
+    <button onclick="runCompare()" class="btn btn-primary"><i class="fas fa-balance-scale"></i>Comparer</button>
+  </div>
+  <div id="compare-content"><div class="card text-center py-12"><i class="fas fa-balance-scale text-4xl text-muted mb-3"></i><p class="text-muted">Cliquez sur Comparer</p></div></div>`;
 }
 
 async function runCompare() {
-  document.getElementById('compare-content').innerHTML = loadingHTML('Comparaison en cours (30-60s)...');
-  const result = await api('/backtest/compare');
-  if (!result || !result.strategies || result.strategies.length === 0) {
-    document.getElementById('compare-content').innerHTML = '<div class="card text-center py-10"><i class="fas fa-exclamation-triangle text-3xl text-hold mb-3"></i><p class="text-muted">Aucun resultat</p></div>';
-    return;
+  document.getElementById('compare-content').innerHTML='<div class="card text-center py-10"><div class="spinner mx-auto mb-3"></div><p class="text-muted">Comparaison (30-90s)...</p></div>';
+  const result=await api('/backtest/compare');
+  if(!result||!result.strategies||result.strategies.length===0){
+    document.getElementById('compare-content').innerHTML='<div class="card text-center py-10"><i class="fas fa-exclamation-triangle text-3xl text-hold mb-3"></i><p class="text-muted">Aucun resultat</p></div>';return;
   }
-  const best = result.best_strategy;
-  const maxPct = Math.max(...result.strategies.map(s => Math.abs(s.profit_pct)), 1);
-  let html = '';
-  if (best) {
-    html += `<div class="card mb-5" style="border-color:var(--accent);box-shadow:0 0 20px rgba(16,185,129,0.1);">
-      <div class="flex items-center gap-3 mb-3"><div class="w-10 h-10 rounded-lg flex items-center justify-center" style="background:rgba(16,185,129,0.15);"><i class="fas fa-trophy text-accent"></i></div>
-      <div><div class="font-bold">Meilleure: ${best.name}</div><div class="text-muted text-xs mono">ID: ${best.id}</div></div></div>
+  const best=result.best_strategy;
+  const maxPct=Math.max(...result.strategies.map(s=>Math.abs(s.profit_pct)),1);
+  let html='';
+  if(best){
+    html+=`<div class="card mb-5" style="border-color:var(--accent);box-shadow:0 0 20px rgba(16,185,129,.1)">
+      <div class="flex items-center gap-3 mb-3"><div class="w-10 h-10 rounded-lg flex items-center justify-center" style="background:rgba(16,185,129,.15)"><i class="fas fa-trophy text-accent"></i></div>
+      <div><div class="font-bold">Meilleure: ${best.name}</div><div class="text-muted text-xs mono">ID:${best.id}</div></div></div>
       <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <div><div class="stat-label">Profit</div><div class="mono font-bold text-lg" style="color:${best.profit_pct>=0?'var(--buy)':'var(--sell)'};">${fmtPct(best.profit_pct)}</div></div>
+        <div><div class="stat-label">Profit</div><div class="mono font-bold text-lg" style="color:${best.profit_pct>=0?'var(--buy)':'var(--sell)'}">${fmtPct(best.profit_pct)}</div></div>
         <div><div class="stat-label">Capital</div><div class="mono font-bold text-lg">$${fmt(best.capital_end)}</div></div>
         <div><div class="stat-label">Win Rate</div><div class="mono font-bold text-lg">${fmt(best.win_rate,1)}%</div></div>
-        <div><div class="stat-label">Trades</div><div class="mono font-bold text-lg">${best.trades_count} (${best.wins}W/${best.losses}L)</div></div>
+        <div><div class="stat-label">Trades</div><div class="mono font-bold text-lg">${best.trades_count}(${best.wins}W/${best.losses}L)</div></div>
       </div></div>`;
   }
-  html += `<div class="card mb-5"><h3 class="font-semibold text-sm mb-4"><i class="fas fa-table text-accent mr-2"></i>Classement</h3>
-    <div class="overflow-x-auto"><table><thead><tr><th>Rang</th><th>Strategie</th><th>Profit</th><th>Capital</th><th>Trades</th><th>Win Rate</th></tr></thead><tbody>
-    ${result.strategies.map((s,i)=>`<tr>
-      <td><span class="inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold" style="background:${i===0?'rgba(16,185,129,0.2)':'var(--bg3)'};color:${i===0?'var(--accent)':'var(--muted)'};">${i+1}</span></td>
-      <td class="font-semibold">${s.name}</td>
-      <td class="mono font-semibold" style="color:${s.profit_pct>=0?'var(--buy)':'var(--sell)'};">${fmtPct(s.profit_pct)}</td>
-      <td class="mono">$${fmt(s.capital_end)}</td>
-      <td class="mono">${s.trades_count}</td>
-      <td class="mono">${fmt(s.win_rate,1)}%</td>
-    </tr>`).join('')}</tbody></table></div></div>`;
-  html += `<div class="card"><h3 class="font-semibold text-sm mb-4"><i class="fas fa-chart-bar text-accent mr-2"></i>Visualisation</h3><div class="space-y-3">
-    ${result.strategies.map(s=>{const w=Math.max(((s.profit_pct+maxPct)/(2*maxPct))*100,2);return`<div><div class="flex items-center justify-between mb-1"><span class="text-sm font-medium">${s.name}</span><span class="mono text-sm" style="color:${s.profit_pct>=0?'var(--buy)':'var(--sell)'};">${fmtPct(s.profit_pct)}</span></div>
-    <div class="h-8 rounded-lg" style="background:var(--bg3);"><div class="h-full rounded-lg" style="width:${w}%;background:${s.profit_pct>=0?'rgba(34,197,94,0.2)':'rgba(239,68,68,0.2)'};border:1px solid ${s.profit_pct>=0?'rgba(34,197,94,0.3)':'rgba(239,68,68,0.3)'};"></div></div></div>`;}).join('')}
+  html+=`<div class="card mb-5"><h3 class="font-semibold text-sm mb-4"><i class="fas fa-table text-accent mr-2"></i>Classement</h3>
+    <div class="overflow-x-auto"><table><thead><tr><th>#</th><th>Strategie</th><th>Profit</th><th>Capital</th><th>Trades</th><th>Win Rate</th></tr></thead><tbody>
+    ${result.strategies.map((s,i)=>`<tr><td><span class="inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold" style="background:${i===0?'rgba(16,185,129,.2)':'var(--bg3)'};color:${i===0?'var(--accent)':'var(--muted)'}">${i+1}</span></td>
+    <td class="font-semibold">${s.name}</td><td class="mono font-semibold" style="color:${s.profit_pct>=0?'var(--buy)':'var(--sell)'}">${fmtPct(s.profit_pct)}</td>
+    <td class="mono">$${fmt(s.capital_end)}</td><td class="mono">${s.trades_count}</td><td class="mono">${fmt(s.win_rate,1)}%</td></tr>`).join('')}
+    </tbody></table></div></div>`;
+  html+=`<div class="card"><h3 class="font-semibold text-sm mb-4"><i class="fas fa-chart-bar text-accent mr-2"></i>Visualisation</h3><div class="space-y-3">
+    ${result.strategies.map(s=>{const w=Math.max(((s.profit_pct+maxPct)/(2*maxPct))*100,2);return`<div><div class="flex items-center justify-between mb-1"><span class="text-sm font-medium">${s.name}</span><span class="mono text-sm" style="color:${s.profit_pct>=0?'var(--buy)':'var(--sell)'}">${fmtPct(s.profit_pct)}</span></div>
+    <div class="h-8 rounded-lg" style="background:var(--bg3)"><div class="h-full rounded-lg" style="width:${w}%;background:${s.profit_pct>=0?'rgba(34,197,94,.2)':'rgba(239,68,68,.2)'};border:1px solid ${s.profit_pct>=0?'rgba(34,197,94,.3)':'rgba(239,68,68,.3)'}"></div></div></div>`}).join('')}
   </div></div>`;
-  document.getElementById('compare-content').innerHTML = html;
+  document.getElementById('compare-content').innerHTML=html;
 }
 
-// ============ PARAMETRES ============
+// ============================
+// PARAMETRES
+// ============================
 function renderSettings() {
-  return `
-    <div class="mb-6"><h1 class="font-display text-3xl font-bold tracking-tight">Parametres</h1><p class="text-muted text-sm mt-1">Configuration du systeme</p></div>
-    <div id="settings-content">${loadingHTML('Chargement des parametres...')}</div>
-  `;
+  return `<div class="mb-6"><h1 class="font-display text-3xl font-bold tracking-tight">Parametres</h1><p class="text-muted text-sm mt-1">Configuration systeme</p></div>
+    <div id="settings-content"><div class="card text-center py-10"><div class="spinner mx-auto mb-3"></div><p class="text-muted">Chargement...</p></div></div>`;
 }
 
 async function initSettings() {
   const container = document.getElementById('settings-content');
-  const [settings, dbinfo, version, config] = await Promise.all([api('/settings'), api('/dbinfo'), api('/version'), api('/config')]);
   let html = '';
+
+  // Appels sequentiels
+  const settings = await api('/settings');
   if (settings) {
-    html += `<div class="card mb-5"><h3 class="font-semibold text-sm mb-4"><i class="fas fa-sliders-h text-accent mr-2"></i>Parametres actifs</h3>
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">${Object.entries(settings).map(([k,v])=>`<div class="flex items-center justify-between p-3 rounded-lg" style="background:var(--bg3);"><span class="text-sm text-muted">${k}</span><span class="mono font-semibold text-sm">${v}</span></div>`).join('')}</div></div>`;
+    html+=`<div class="card mb-5"><h3 class="font-semibold text-sm mb-4"><i class="fas fa-sliders-h text-accent mr-2"></i>Parametres actifs</h3>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">${Object.entries(settings).map(([k,v])=>`<div class="flex items-center justify-between p-3 rounded-lg" style="background:var(--bg3)"><span class="text-sm text-muted">${k}</span><span class="mono font-semibold text-sm">${v}</span></div>`).join('')}</div></div>`;
+  } else {
+    html+=`<div class="card mb-5"><h3 class="font-semibold text-sm mb-3"><i class="fas fa-sliders-h text-accent mr-2"></i>Parametres</h3><p class="text-muted">Impossible de charger les parametres</p></div>`;
   }
+
+  const config = await api('/config');
   if (config) {
-    html += `<div class="card mb-5"><h3 class="font-semibold text-sm mb-4"><i class="fas fa-cog text-accent mr-2"></i>Configuration</h3>
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">${Object.entries(config).map(([k,v])=>`<div class="flex items-center justify-between p-3 rounded-lg" style="background:var(--bg3);"><span class="text-sm text-muted">${k}</span><span class="mono font-semibold text-sm">${v}</span></div>`).join('')}</div></div>`;
+    html+=`<div class="card mb-5"><h3 class="font-semibold text-sm mb-4"><i class="fas fa-cog text-accent mr-2"></i>Configuration</h3>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">${Object.entries(config).map(([k,v])=>`<div class="flex items-center justify-between p-3 rounded-lg" style="background:var(--bg3)"><span class="text-sm text-muted">${k}</span><span class="mono font-semibold text-sm">${v}</span></div>`).join('')}</div></div>`;
   }
+
+  const dbinfo = await api('/dbinfo');
   if (dbinfo) {
-    html += `<div class="card mb-5"><h3 class="font-semibold text-sm mb-4"><i class="fas fa-database text-accent mr-2"></i>Base de donnees</h3>
+    html+=`<div class="card mb-5"><h3 class="font-semibold text-sm mb-4"><i class="fas fa-database text-accent mr-2"></i>Base de donnees</h3>
       <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div class="p-4 rounded-lg text-center" style="background:var(--bg3);"><div class="stat-label">Premier</div><div class="mono font-semibold text-sm mt-1">${fmtDateTime(dbinfo.min_timestamp)}</div></div>
-        <div class="p-4 rounded-lg text-center" style="background:var(--bg3);"><div class="stat-label">Dernier</div><div class="mono font-semibold text-sm mt-1">${fmtDateTime(dbinfo.max_timestamp)}</div></div>
-        <div class="p-4 rounded-lg text-center" style="background:var(--bg3);"><div class="stat-label">Total</div><div class="mono font-semibold text-lg mt-1 text-accent">${dbinfo.count}</div></div>
+        <div class="p-4 rounded-lg text-center" style="background:var(--bg3)"><div class="stat-label">Premier</div><div class="mono font-semibold text-sm mt-1">${fmtDateTime(dbinfo.min_timestamp)}</div></div>
+        <div class="p-4 rounded-lg text-center" style="background:var(--bg3)"><div class="stat-label">Dernier</div><div class="mono font-semibold text-sm mt-1">${fmtDateTime(dbinfo.max_timestamp)}</div></div>
+        <div class="p-4 rounded-lg text-center" style="background:var(--bg3)"><div class="stat-label">Total</div><div class="mono font-semibold text-lg mt-1 text-accent">${dbinfo.count}</div></div>
       </div></div>`;
   }
+
+  const version = await api('/version');
   if (version) {
-    html += `<div class="card mb-5"><h3 class="font-semibold text-sm mb-3"><i class="fas fa-code-branch text-accent mr-2"></i>Version</h3>
-      <div class="p-3 rounded-lg flex items-center justify-between" style="background:var(--bg3);"><span class="text-muted text-sm">Version</span><span class="mono font-bold text-accent">${version.version}</span></div></div>`;
+    html+=`<div class="card mb-5"><h3 class="font-semibold text-sm mb-3"><i class="fas fa-code-branch text-accent mr-2"></i>Version</h3>
+      <div class="p-3 rounded-lg flex items-center justify-between" style="background:var(--bg3)"><span class="text-muted text-sm">Version</span><span class="mono font-bold text-accent">${version.version}</span></div></div>`;
   }
-  html += `<div class="card"><h3 class="font-semibold text-sm mb-4"><i class="fas fa-tools text-accent mr-2"></i>Actions</h3>
+
+  html+=`<div class="card"><h3 class="font-semibold text-sm mb-4"><i class="fas fa-tools text-accent mr-2"></i>Actions</h3>
     <div class="flex flex-wrap gap-3">
       <button onclick="refreshData()" class="btn btn-primary"><i class="fas fa-sync-alt"></i>Rafraichir</button>
       <button onclick="navigateTo('debug')" class="btn btn-secondary"><i class="fas fa-bug"></i>Debug</button>
       <button onclick="navigateTo('chart')" class="btn btn-secondary"><i class="fas fa-chart-area"></i>Chart</button>
     </div></div>`;
-  container.innerHTML = html;
+
+  container.innerHTML=html;
 }
 
-// ============ DEBUG ============
+// ============================
+// DEBUG
+// ============================
 function renderDebug() {
-  return `
-    <div class="mb-6 flex items-center justify-between flex-wrap gap-3">
-      <div><h1 class="font-display text-3xl font-bold tracking-tight">Debug</h1><p class="text-muted text-sm mt-1">Diagnostic KuCoin API</p></div>
-      <button onclick="runDebug()" class="btn btn-primary"><i class="fas fa-bug"></i>Tester KuCoin</button>
-    </div>
-    <div id="debug-content">
-      <div class="card text-center py-12"><i class="fas fa-bug text-4xl text-muted mb-3"></i><p class="text-muted">Cliquez sur Tester pour verifier la connexion KuCoin</p></div>
-    </div>
-  `;
+  return `<div class="mb-6 flex items-center justify-between flex-wrap gap-3">
+    <div><h1 class="font-display text-3xl font-bold tracking-tight">Debug</h1><p class="text-muted text-sm mt-1">Diagnostic KuCoin</p></div>
+    <button onclick="runDebug()" class="btn btn-primary"><i class="fas fa-bug"></i>Tester</button>
+  </div>
+  <div id="debug-content"><div class="card text-center py-12"><i class="fas fa-bug text-4xl text-muted mb-3"></i><p class="text-muted">Cliquez sur Tester</p></div></div>`;
 }
-async function initDebug() {}
+
+async function initDebug(){}
 
 async function runDebug() {
-  document.getElementById('debug-content').innerHTML = loadingHTML('Requete KuCoin en cours...');
-  const result = await api('/debug');
-  if (!result) {
-    document.getElementById('debug-content').innerHTML = '<div class="card text-center py-10"><i class="fas fa-exclamation-triangle text-3xl text-sell mb-3"></i><p class="text-sell">Impossible de contacter le serveur</p></div>';
-    return;
-  }
-  let html = `<div class="card mb-4"><h3 class="font-semibold text-sm mb-3"><i class="fas fa-server text-accent mr-2"></i>Status</h3>
-    <div class="flex items-center gap-3"><div class="w-3 h-3 rounded-full" style="background:${result.status_code===200?'var(--buy)':'var(--sell)'};"></div><span class="mono font-bold">HTTP ${result.status_code||'N/A'}</span></div></div>`;
-  if (result.response) {
-    const resp = result.response;
-    html += `<div class="card mb-4"><h3 class="font-semibold text-sm mb-3"><i class="fas fa-code text-accent mr-2"></i>Reponse KuCoin</h3>
+  document.getElementById('debug-content').innerHTML='<div class="card text-center py-10"><div class="spinner mx-auto mb-3"></div><p class="text-muted">Requete KuCoin...</p></div>';
+  const result=await api('/debug');
+  if(!result){document.getElementById('debug-content').innerHTML='<div class="card text-center py-10"><i class="fas fa-exclamation-triangle text-3xl text-sell mb-3"></i><p class="text-sell">Serveur indisponible</p></div>';return}
+  let html=`<div class="card mb-4"><h3 class="font-semibold text-sm mb-3"><i class="fas fa-server text-accent mr-2"></i>Status</h3>
+    <div class="flex items-center gap-3"><div class="w-3 h-3 rounded-full" style="background:${result.status_code===200?'var(--buy)':'var(--sell)'}"></div><span class="mono font-bold">HTTP ${result.status_code||'N/A'}</span></div></div>`;
+  if(result.response){
+    const r=result.response;
+    html+=`<div class="card mb-4"><h3 class="font-semibold text-sm mb-3"><i class="fas fa-code text-accent mr-2"></i>KuCoin</h3>
       <div class="space-y-2">
-        <div class="flex justify-between p-2 rounded" style="background:var(--bg3);"><span class="text-muted text-sm">Code</span><span class="mono text-sm ${resp.code==='200000'?'text-buy':'text-sell'}">${resp.code||'N/A'}</span></div>
-        ${resp.data?`<div class="flex justify-between p-2 rounded" style="background:var(--bg3);"><span class="text-muted text-sm">Bougies</span><span class="mono text-sm text-accent">${resp.data.length}</span></div>`:''}
+        <div class="flex justify-between p-2 rounded" style="background:var(--bg3)"><span class="text-muted text-sm">Code</span><span class="mono text-sm ${r.code==='200000'?'text-buy':'text-sell'}">${r.code||'N/A'}</span></div>
+        ${r.data?`<div class="flex justify-between p-2 rounded" style="background:var(--bg3)"><span class="text-muted text-sm">Bougies</span><span class="mono text-sm text-accent">${r.data.length}</span></div>`:''}
       </div></div>`;
-    if (resp.data&&resp.data.length>0) {
-      html += `<div class="card mb-4"><h3 class="font-semibold text-sm mb-3"><i class="fas fa-table text-accent mr-2"></i>Dernieres bougies (5)</h3>
-        <div class="overflow-x-auto"><table><thead><tr><th>Time</th><th>Open</th><th>Close</th><th>High</th><th>Low</th><th>Volume</th></tr></thead>
-        <tbody>${resp.data.slice(0,5).map(c=>`<tr><td class="mono text-xs">${fmtTime(parseInt(c[0]))}</td><td class="mono">${c[1]}</td><td class="mono">${c[2]}</td><td class="mono">${c[3]}</td><td class="mono">${c[4]}</td><td class="mono">${c[5]}</td></tr>`).join('')}</tbody></table></div></div>`;
+    if(r.data&&r.data.length>0){
+      html+=`<div class="card mb-4"><h3 class="font-semibold text-sm mb-3"><i class="fas fa-table text-accent mr-2"></i>5 dernieres bougies</h3>
+        <div class="overflow-x-auto"><table><thead><tr><th>Time</th><th>Open</th><th>Close</th><th>High</th><th>Low</th><th>Vol</th></tr></thead>
+        <tbody>${r.data.slice(0,5).map(c=>`<tr><td class="mono text-xs">${fmtTime(parseInt(c[0]))}</td><td class="mono">${c[1]}</td><td class="mono">${c[2]}</td><td class="mono">${c[3]}</td><td class="mono">${c[4]}</td><td class="mono">${c[5]}</td></tr>`).join('')}</tbody></table></div></div>`;
     }
   }
-  html += `<div class="card"><h3 class="font-semibold text-sm mb-3"><i class="fas fa-file-code text-accent mr-2"></i>Reponse brute</h3>
-    <pre class="mono text-xs text-muted overflow-x-auto p-3 rounded-lg" style="background:var(--bg);max-height:400px;">${JSON.stringify(result,null,2)}</pre></div>`;
-  document.getElementById('debug-content').innerHTML = html;
-}
-
-// ============================
-// HEADER UPDATE
-// ============================
-async function updateHeader() {
-  const [price, signal] = await Promise.all([api('/price'), api('/signal')]);
-  const connected = price && !price.error;
-  state.connected = connected;
-  document.getElementById('hdr-status').style.background = connected ? 'var(--buy)' : 'var(--sell)';
-  document.getElementById('hdr-status-text').textContent = connected ? 'En ligne' : 'Hors ligne';
-  if (price && !price.error) {
-    const el = document.getElementById('hdr-price');
-    const old = state.price;
-    state.price = price.price;
-    el.textContent = fmt(price.price, 4);
-    if (old !== null) {
-      el.style.color = price.price > old ? 'var(--buy)' : price.price < old ? 'var(--sell)' : 'var(--fg)';
-      setTimeout(() => { el.style.color = 'var(--fg)'; }, 1500);
-    }
-  }
-  if (signal && !signal.error) {
-    state.signal = signal.signal;
-    document.getElementById('hdr-signal-dot').style.background = signalColor(signal.signal);
-    const st = document.getElementById('hdr-signal-text');
-    st.textContent = signal.signal;
-    st.style.color = signalColor(signal.signal);
-  }
-  const stats = await api('/stats');
-  if (stats) document.getElementById('side-candles').textContent = stats.stored_candles;
-  const ver = await api('/version');
-  if (ver) document.getElementById('side-version').textContent = ver.version;
+  html+=`<div class="card"><h3 class="font-semibold text-sm mb-3"><i class="fas fa-file-code text-accent mr-2"></i>Brut</h3>
+    <pre class="mono text-xs text-muted overflow-x-auto p-3 rounded-lg" style="background:var(--bg);max-height:400px">${JSON.stringify(result,null,2)}</pre></div>`;
+  document.getElementById('debug-content').innerHTML=html;
 }
 
 // ============================
 // REFRESH
 // ============================
 async function refreshData() {
-  const icon = document.getElementById('refresh-icon');
+  const icon=document.getElementById('refresh-icon');
   icon.classList.add('fa-spin');
   try {
-    const result = await api('/refresh');
-    if (result) {
-      toast(`${result.loaded} bougies chargees, ${result.stored_candles} en base`, 'success');
-      await updateHeader();
-      if (currentPage === 'chart') await loadChart();
-    } else toast('Erreur lors du rafraichissement', 'error');
-  } finally { icon.classList.remove('fa-spin'); }
+    const result=await api('/refresh');
+    if(result){toast(`${result.loaded} bougies, ${result.stored_candles} en base`,'success');await updateHeader();if(currentPage==='chart')await loadChart()}
+    else toast('Erreur refresh','error');
+  } finally{icon.classList.remove('fa-spin')}
+}
+
+// ============================
+// HEADER UPDATE
+// ============================
+async function updateHeader() {
+  const sig = await api('/signal');
+  const connected = sig && !sig.error;
+  document.getElementById('hdr-status').style.background = connected?'var(--buy)':'var(--sell)';
+  document.getElementById('hdr-status-text').textContent = connected?'En ligne':'Hors ligne';
+  if (connected) {
+    document.getElementById('hdr-price').textContent = fmt(sig.price,4);
+    document.getElementById('hdr-signal-dot').style.background = signalColor(sig.signal);
+    document.getElementById('hdr-signal-text').textContent = sig.signal;
+    document.getElementById('hdr-signal-text').style.color = signalColor(sig.signal);
+  }
+  const stats = await api('/stats');
+  if(stats) document.getElementById('side-candles').textContent = stats.stored_candles;
+  const ver = await api('/version');
+  if(ver) document.getElementById('side-version').textContent = ver.version;
 }
 
 // ============================
 // AUTO-REFRESH
 // ============================
-function startAutoRefresh() {
-  if (refreshTimer) clearInterval(refreshTimer);
-  refreshTimer = setInterval(() => updateHeader(), 60000);
-}
+function startAutoRefresh(){if(refreshTimer)clearInterval(refreshTimer);refreshTimer=setInterval(()=>updateHeader(),120000)}
 
 // ============================
 // INIT
 // ============================
 async function init() {
-  await updateHeader();
-  navigateTo('dashboard');
-  startAutoRefresh();
+  const awake = await wakeServer();
+  if (awake) {
+    await updateHeader();
+    navigateTo('dashboard');
+    startAutoRefresh();
+  }
 }
 
-document.addEventListener('keydown', (e) => {
-  const map = {'1':'dashboard','2':'chart','3':'signal','4':'strategies','5':'backtest','6':'compare','7':'settings','8':'debug'};
-  if (map[e.key] && !e.ctrlKey && !e.metaKey && !e.altKey && document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'SELECT') {
-    navigateTo(map[e.key]);
-  }
+document.addEventListener('keydown',e=>{
+  const m={'1':'dashboard','2':'chart','3':'signal','4':'strategies','5':'backtest','6':'compare','7':'settings','8':'debug'};
+  if(m[e.key]&&!e.ctrlKey&&!e.metaKey&&!e.altKey&&document.activeElement.tagName!=='INPUT'&&document.activeElement.tagName!=='SELECT')navigateTo(m[e.key]);
 });
 
 init();
