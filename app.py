@@ -394,11 +394,16 @@ def signal():
 # =========================
 @app.route("/stats")
 def stats():
-
-    return jsonify({
-        "stored_candles": count_candles()
-    })
-
+    try:
+        count = count_candles()
+        return jsonify({
+            "stored_candles": count
+        })
+    except Exception as e:
+        return jsonify({
+            "stored_candles": 0,
+            "error": str(e)
+        })
 
 # =========================
 # History
