@@ -23,9 +23,9 @@ app = Flask(__name__)
 # =========================
 # Configuration  
 # =========================
-SYMBOL = "BCHUSDT"
+APP_SYMBOL = "BCHUSDT"
 
-TIMEFRAME = "1hour"
+APP_TIMEFRAME = "1hour"
 
 APP_HISTORY_SIZE = 1000
 
@@ -54,7 +54,7 @@ def get_data():
 
     url = (
         f"https://api.kucoin.com/api/v1/market/candles"
-        f"?type={TIMEFRAME}"
+        f"?type={APP_TIMEFRAME}"
         f"&symbol=BCH-USDT"
         f"&startAt={start_at}"
         f"&endAt={end_at}"
@@ -126,7 +126,7 @@ def get_data():
 
             save_candle(
                 row["time"],
-                SYMBOL,
+                APP_SYMBOL,
                 row["open"],
                 row["high"],
                 row["low"],
@@ -187,7 +187,7 @@ def home():
 
     return jsonify({
         "status": "online",
-        "pair": SYMBOL
+        "pair": APP_SYMBOL
     })
 
 
@@ -199,6 +199,18 @@ def version():
     return {
         "version": "2026-06-09"
     }
+
+@app.route("/config")
+def config():
+    return jsonify({
+        "symbol": APP_SYMBOL,
+        "timeframe": APP_TIMEFRAME,
+        "history_size": APP_HISTORY_SIZE,
+        "ema_fast": EMA_FAST,
+        "ema_slow": EMA_SLOW,
+        "rsi_period": RSI_PERIOD
+    })
+
 
 # =========================
 # Debug KuCoin
@@ -241,7 +253,7 @@ def price():
     last = df.iloc[-1]
 
     return jsonify({
-        "pair": SYMBOL,
+        "pair": APP_SYMBOL,
         "price": round(float(last["close"]), 4),
         "time": int(last["time"])
     })
@@ -333,7 +345,7 @@ def signal():
 
         return jsonify({
 
-            "pair": SYMBOL,
+            "pair": APP_SYMBOL,
 
             "signal": signal_value,
 
@@ -483,8 +495,8 @@ def backtest():
 def config():
 
     return jsonify({
-        "symbol": SYMBOL,
-        "timeframe": TIMEFRAME,
+        "symbol": APP_SYMBOL,
+        "timeframe": APP_TIMEFRAME,
         "history_size": APP_HISTORY_SIZE,
         "ema_fast": EMA_FAST,
         "ema_slow": EMA_SLOW,
