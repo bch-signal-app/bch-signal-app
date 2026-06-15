@@ -3,3 +3,4 @@ gunicorn
 requests
 pandas
 duckdb
+flask-cors
