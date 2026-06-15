@@ -250,9 +250,17 @@ def clone_strategy(strategy_id):
     if not row:
         return None
 
-    cursor = db.execute(
+    next_id = db.execute(
+        """
+        SELECT COALESCE(MAX(id), 0) + 1
+        FROM strategies
+        """
+    ).fetchone()[0]
+
+    db.execute(
         """
         INSERT INTO strategies (
+            id,
             name,
             ema_fast,
             ema_slow,
@@ -263,9 +271,10 @@ def clone_strategy(strategy_id):
             take_profit,
             initial_capital
         )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """,
         (
+            next_id,
             row[1] + " Copy",
             row[2],
             row[3],
@@ -280,7 +289,7 @@ def clone_strategy(strategy_id):
 
     db.commit()
 
-    return cursor.lastrowid
+    return next_id
 
 def delete_strategy(strategy_id):
 
