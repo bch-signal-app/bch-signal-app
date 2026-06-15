@@ -42,34 +42,6 @@ body { background: var(--bg); color: var(--fg); font-family: 'Space Grotesk', sa
 ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--muted); }
 
-.glow-border {
-  position: relative;
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  overflow: hidden;
-}
-.glow-border::before {
-  content: '';
-  position: absolute;
-  inset: -1px;
-  border-radius: 12px;
-  background: conic-gradient(from var(--angle, 0deg), transparent 70%, var(--accent) 100%);
-  opacity: 0;
-  transition: opacity 0.4s;
-  z-index: -1;
-  animation: rotateBorder 4s linear infinite;
-}
-.glow-border:hover::before { opacity: 0.5; }
-
-@keyframes rotateBorder {
-  to { --angle: 360deg; }
-}
-@property --angle {
-  syntax: '<angle>';
-  initial-value: 0deg;
-  inherits: false;
-}
-
 .card {
   background: var(--bg2);
   border: 1px solid var(--border);
@@ -154,6 +126,7 @@ body { background: var(--bg); color: var(--fg); font-family: 'Space Grotesk', sa
 .toast-success { background: rgba(34,197,94,0.15); color: var(--buy); border: 1px solid rgba(34,197,94,0.3); }
 .toast-error { background: rgba(239,68,68,0.15); color: var(--sell); border: 1px solid rgba(239,68,68,0.3); }
 .toast-info { background: rgba(16,185,129,0.15); color: var(--accent); border: 1px solid rgba(16,185,129,0.3); }
+.toast-warn { background: rgba(245,158,11,0.15); color: var(--hold); border: 1px solid rgba(245,158,11,0.3); }
 @keyframes slideIn { from { transform: translateX(100px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
 @keyframes fadeOut { to { opacity: 0; transform: translateX(50px); } }
 
@@ -164,14 +137,6 @@ table { width: 100%; border-collapse: collapse; }
 th { text-align: left; padding: 10px 12px; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); border-bottom: 1px solid var(--border); font-weight: 600; }
 td { padding: 10px 12px; font-size: 13px; border-bottom: 1px solid rgba(26,37,64,0.5); }
 tr:hover td { background: rgba(16,185,129,0.03); }
-
-.tab-btn {
-  padding: 8px 16px; border: none; background: transparent;
-  color: var(--muted); cursor: pointer; font-family: 'Space Grotesk'; font-size: 13px;
-  border-bottom: 2px solid transparent; transition: all 0.2s;
-}
-.tab-btn:hover { color: var(--fg); }
-.tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
 
 .modal-overlay {
   position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 999;
@@ -198,6 +163,17 @@ tr:hover td { background: rgba(16,185,129,0.03); }
 
 .progress-bar { height: 6px; border-radius: 3px; background: var(--bg3); overflow: hidden; }
 .progress-fill { height: 100%; border-radius: 3px; transition: width 0.5s ease; }
+
+.loading-overlay {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  padding: 40px; gap: 16px;
+}
+.spinner {
+  width: 32px; height: 32px; border: 3px solid var(--border);
+  border-top-color: var(--accent); border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
 </style>
 </head>
 <body class="bg-pattern">
@@ -222,23 +198,19 @@ tr:hover td { background: rgba(16,185,129,0.03); }
       </div>
     </div>
     <div class="flex items-center gap-5">
-      <!-- Prix -->
       <div class="flex items-center gap-2" id="header-price">
         <span class="text-muted text-xs font-semibold">BCH/USDT</span>
         <span class="mono font-bold text-lg" id="hdr-price">---.--</span>
       </div>
-      <!-- Signal -->
       <div id="header-signal" class="hidden sm:flex items-center gap-2">
         <div class="pulse-dot" id="hdr-signal-dot" style="background: var(--muted);"></div>
         <span class="mono font-bold text-sm" id="hdr-signal-text">---</span>
       </div>
-      <!-- Status -->
       <div class="flex items-center gap-2">
         <div class="w-2 h-2 rounded-full" id="hdr-status" style="background: var(--muted);"></div>
         <span class="text-muted text-xs hidden sm:inline" id="hdr-status-text">Hors ligne</span>
       </div>
-      <!-- Refresh -->
-      <button onclick="refreshData()" class="btn btn-secondary btn-sm" title="Rafraichir les données">
+      <button onclick="refreshData()" class="btn btn-secondary btn-sm" title="Rafraichir les donnees">
         <i class="fas fa-sync-alt" id="refresh-icon"></i>
         <span class="hidden sm:inline">Refresh</span>
       </button>
@@ -248,7 +220,6 @@ tr:hover td { background: rgba(16,185,129,0.03); }
 
 <!-- Layout -->
 <div class="flex" style="min-height: calc(100vh - 52px);">
-  <!-- Sidebar -->
   <nav class="sidebar border-r border-[var(--border)] p-4 flex flex-col gap-1" style="background: var(--bg2);" id="sidebar">
     <div class="text-muted text-[10px] uppercase tracking-widest font-bold mb-2 px-3">Navigation</div>
     <div class="nav-item active" data-page="dashboard"><i class="fas fa-th-large"></i>Dashboard</div>
@@ -268,10 +239,7 @@ tr:hover td { background: rgba(16,185,129,0.03); }
     </div>
   </nav>
 
-  <!-- Main Content -->
-  <main class="flex-1 p-5 md:p-8 overflow-y-auto main-content" id="main-content">
-    <!-- Contenu dynamique -->
-  </main>
+  <main class="flex-1 p-5 md:p-8 overflow-y-auto main-content" id="main-content"></main>
 </div>
 
 <script>
@@ -279,17 +247,12 @@ tr:hover td { background: rgba(16,185,129,0.03); }
 // CONFIG
 // ============================
 const API = '';
-const REFRESH_INTERVAL = 30000;
+const API_TIMEOUT = 60000;    // 60s timeout (Render cold start)
+const MAX_RETRIES = 2;
 let refreshTimer = null;
 let currentPage = 'dashboard';
 let chartInstance = null;
 let rsiChartInstance = null;
-let candleSeries = null;
-let emaFastSeries = null;
-let emaSlowSeries = null;
-let emaTrendSeries = null;
-let volumeSeries = null;
-let rsiSeries = null;
 
 // ============================
 // ETAT GLOBAL
@@ -311,23 +274,52 @@ const state = {
 };
 
 // ============================
-// API SERVICE
+// API SERVICE AVEC TIMEOUT + RETRY
 // ============================
-async function api(endpoint, options = {}) {
+async function api(endpoint, options = {}, retryCount = 0) {
+  const url = `${API}${endpoint}`;
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), API_TIMEOUT);
+
   try {
-    const url = `${API}${endpoint}`;
-    const resp = await fetch(url, { ...options, headers: { 'Content-Type': 'application/json', ...(options.headers || {}) } });
-    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    console.log(`[API] ${options.method || 'GET'} ${url} (tentative ${retryCount + 1})`);
+    const resp = await fetch(url, {
+      ...options,
+      signal: controller.signal,
+      headers: { 'Content-Type': 'application/json', ...(options.headers || {}) }
+    });
+    clearTimeout(timeoutId);
+
+    if (!resp.ok) {
+      const text = await resp.text().catch(() => '');
+      console.error(`[API] HTTP ${resp.status}: ${text}`);
+      throw new Error(`HTTP ${resp.status}`);
+    }
+
     const data = await resp.json();
+    console.log(`[API] ${endpoint} OK`, data);
     return data;
+
   } catch (e) {
-    console.error(`API Error [${endpoint}]:`, e);
+    clearTimeout(timeoutId);
+    const isTimeout = e.name === 'AbortError';
+    const errMsg = isTimeout ? 'Timeout (serveur en reveil?)' : e.message;
+    console.error(`[API] Erreur ${endpoint}: ${errMsg}`);
+
+    // Retry si timeout ou erreur reseau
+    if (retryCount < MAX_RETRIES && (isTimeout || e.message.includes('Failed to fetch'))) {
+      console.log(`[API] Retry ${endpoint} dans 3s...`);
+      toast(`Serveur en cours de reveil, retry ${retryCount + 1}/${MAX_RETRIES}...`, 'warn');
+      await new Promise(r => setTimeout(r, 3000));
+      return api(endpoint, options, retryCount + 1);
+    }
+
     return null;
   }
 }
 
 // ============================
-// CALCULS TECHNIQUES (cote client pour le chart)
+// CALCULS TECHNIQUES
 // ============================
 function calcEMA(closes, period) {
   const result = [closes[0]];
@@ -348,16 +340,12 @@ function calcRSI(closes, period = 14) {
   }
   let avgGain = gainSum / period;
   let avgLoss = lossSum / period;
-  const rs0 = avgGain / (avgLoss || 0.0001);
-  rsi[period] = 100 - 100 / (1 + rs0);
+  rsi[period] = 100 - 100 / (1 + avgGain / (avgLoss || 0.0001));
   for (let i = period + 1; i < closes.length; i++) {
     const d = closes[i] - closes[i - 1];
-    const g = d > 0 ? d : 0;
-    const l = d < 0 ? -d : 0;
-    avgGain = (avgGain * (period - 1) + g) / period;
-    avgLoss = (avgLoss * (period - 1) + l) / period;
-    const rs = avgGain / (avgLoss || 0.0001);
-    rsi[i] = 100 - 100 / (1 + rs);
+    avgGain = (avgGain * (period - 1) + (d > 0 ? d : 0)) / period;
+    avgLoss = (avgLoss * (period - 1) + (d < 0 ? -d : 0)) / period;
+    rsi[i] = 100 - 100 / (1 + avgGain / (avgLoss || 0.0001));
   }
   return rsi;
 }
@@ -376,20 +364,21 @@ function fmtDateTime(ts) {
   return new Date(ts * 1000).toLocaleString('fr-FR');
 }
 
-function signalClass(s) {
-  if (s === 'BUY') return 'text-buy';
-  if (s === 'SELL') return 'text-sell';
-  return 'text-hold';
-}
-function signalBadge(s) {
-  const cls = s === 'BUY' ? 'badge-buy' : s === 'SELL' ? 'badge-sell' : 'badge-hold';
-  const icon = s === 'BUY' ? 'fa-arrow-up' : s === 'SELL' ? 'fa-arrow-down' : 'fa-minus';
-  return `<span class="badge ${cls}"><i class="fas ${icon} text-xs"></i>${s}</span>`;
-}
 function signalColor(s) {
   if (s === 'BUY') return 'var(--buy)';
   if (s === 'SELL') return 'var(--sell)';
   return 'var(--hold)';
+}
+
+function signalBadge(s) {
+  if (!s || s === '---') return '<span class="badge badge-hold"><i class="fas fa-minus text-xs"></i>---</span>';
+  const cls = s === 'BUY' ? 'badge-buy' : s === 'SELL' ? 'badge-sell' : 'badge-hold';
+  const icon = s === 'BUY' ? 'fa-arrow-up' : s === 'SELL' ? 'fa-arrow-down' : 'fa-minus';
+  return `<span class="badge ${cls}"><i class="fas ${icon} text-xs"></i>${s}</span>`;
+}
+
+function loadingHTML(msg = 'Chargement en cours...') {
+  return `<div class="card loading-overlay"><div class="spinner"></div><p class="text-muted text-sm">${msg}</p><p class="text-muted text-xs">Le serveur peut mettre 30-60s a se reveiller</p></div>`;
 }
 
 // ============================
@@ -398,9 +387,10 @@ function signalColor(s) {
 function toast(msg, type = 'info') {
   const el = document.createElement('div');
   el.className = `toast toast-${type}`;
-  el.innerHTML = `<i class="fas ${type === 'success' ? 'fa-check-circle' : type === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle'}"></i> ${msg}`;
+  const icons = { success: 'fa-check-circle', error: 'fa-exclamation-circle', info: 'fa-info-circle', warn: 'fa-exclamation-triangle' };
+  el.innerHTML = `<i class="fas ${icons[type] || icons.info}"></i> ${msg}`;
   document.getElementById('toasts').appendChild(el);
-  setTimeout(() => el.remove(), 3000);
+  setTimeout(() => el.remove(), 4000);
 }
 
 // ============================
@@ -430,7 +420,6 @@ document.querySelectorAll('.nav-item').forEach(item => {
     const page = item.dataset.page;
     if (!page) return;
     navigateTo(page);
-    // Fermer sidebar mobile
     document.getElementById('sidebar').classList.remove('open');
   });
 });
@@ -489,59 +478,29 @@ function renderDashboard() {
       <h1 class="font-display text-3xl font-bold tracking-tight">Tableau de bord</h1>
       <p class="text-muted text-sm mt-1">Vue d'ensemble du terminal BCHUSDT</p>
     </div>
-
-    <!-- Ligne 1 : Prix + Signal -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-5">
-      <div class="card col-span-1">
-        <div class="stat-label">Prix actuel</div>
-        <div class="stat-value text-accent mono" id="dash-price">---.--</div>
-        <div class="text-muted text-xs mt-2 mono" id="dash-price-time">Derniere MAJ: ---</div>
-      </div>
-      <div class="card col-span-1">
-        <div class="stat-label">Signal</div>
-        <div class="mt-2" id="dash-signal">${signalBadge('---')}</div>
-        <div class="text-muted text-xs mt-2" id="dash-signal-indicators">Chargement...</div>
-      </div>
-      <div class="card col-span-1">
-        <div class="stat-label">Strategie active</div>
-        <div class="stat-value text-[var(--fg)] text-xl mono" id="dash-strategy-name">---</div>
-        <div class="text-muted text-xs mt-2" id="dash-strategy-params">---</div>
-      </div>
+      <div class="card"><div class="stat-label">Prix actuel</div><div class="stat-value text-accent mono" id="dash-price">---.--</div><div class="text-muted text-xs mt-2 mono" id="dash-price-time">---</div></div>
+      <div class="card"><div class="stat-label">Signal</div><div class="mt-2" id="dash-signal">${signalBadge('---')}</div><div class="text-muted text-xs mt-2" id="dash-signal-indicators">Chargement...</div></div>
+      <div class="card"><div class="stat-label">Strategie active</div><div class="stat-value text-[var(--fg)] text-xl mono" id="dash-strategy-name">---</div><div class="text-muted text-xs mt-2" id="dash-strategy-params">---</div></div>
     </div>
-
-    <!-- Ligne 2 : Stats -->
     <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-5">
-      <div class="card text-center">
-        <div class="stat-label">Bougies</div>
-        <div class="stat-value text-lg mono" id="dash-candles">0</div>
-      </div>
-      <div class="card text-center">
-        <div class="stat-label">Timeframe</div>
-        <div class="stat-value text-lg mono" id="dash-timeframe">---</div>
-      </div>
-      <div class="card text-center">
-        <div class="stat-label">EMA Fast / Slow</div>
-        <div class="stat-value text-lg mono" id="dash-ema">--- / ---</div>
-      </div>
-      <div class="card text-center">
-        <div class="stat-label">RSI</div>
-        <div class="stat-value text-lg mono" id="dash-rsi">---</div>
-      </div>
+      <div class="card text-center"><div class="stat-label">Bougies</div><div class="stat-value text-lg mono" id="dash-candles">0</div></div>
+      <div class="card text-center"><div class="stat-label">Timeframe</div><div class="stat-value text-lg mono" id="dash-timeframe">---</div></div>
+      <div class="card text-center"><div class="stat-label">EMA Fast / Slow</div><div class="stat-value text-lg mono" id="dash-ema">--- / ---</div></div>
+      <div class="card text-center"><div class="stat-label">RSI</div><div class="stat-value text-lg mono" id="dash-rsi">---</div></div>
     </div>
-
-    <!-- Ligne 3 : DB Info + Config -->
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
       <div class="card">
         <h3 class="font-semibold text-sm mb-3 flex items-center gap-2"><i class="fas fa-database text-accent"></i>Base de donnees</h3>
-        <div class="space-y-2 text-sm" id="dash-dbinfo">
-          <div class="flex justify-between"><span class="text-muted">Min timestamp</span><span class="mono" id="dash-db-min">---</span></div>
-          <div class="flex justify-between"><span class="text-muted">Max timestamp</span><span class="mono" id="dash-db-max">---</span></div>
-          <div class="flex justify-between"><span class="text-muted">Total enregistrements</span><span class="mono" id="dash-db-count">---</span></div>
+        <div class="space-y-2 text-sm">
+          <div class="flex justify-between"><span class="text-muted">Min</span><span class="mono" id="dash-db-min">---</span></div>
+          <div class="flex justify-between"><span class="text-muted">Max</span><span class="mono" id="dash-db-max">---</span></div>
+          <div class="flex justify-between"><span class="text-muted">Total</span><span class="mono" id="dash-db-count">---</span></div>
         </div>
       </div>
       <div class="card">
         <h3 class="font-semibold text-sm mb-3 flex items-center gap-2"><i class="fas fa-sliders-h text-accent"></i>Configuration</h3>
-        <div class="space-y-2 text-sm" id="dash-config">
+        <div class="space-y-2 text-sm">
           <div class="flex justify-between"><span class="text-muted">Paire</span><span class="mono">BCHUSDT</span></div>
           <div class="flex justify-between"><span class="text-muted">Historique</span><span class="mono" id="dash-cfg-history">---</span></div>
           <div class="flex justify-between"><span class="text-muted">RSI Periode</span><span class="mono" id="dash-cfg-rsi">---</span></div>
@@ -557,15 +516,14 @@ async function initDashboard() {
     api('/price'), api('/signal'), api('/config'), api('/dbinfo'),
     api('/active-strategy'), api('/version'), api('/stats')
   ]);
-
-  if (price) {
+  if (price && !price.error) {
     document.getElementById('dash-price').textContent = fmt(price.price, 4);
-    document.getElementById('dash-price-time').textContent = 'Derniere MAJ: ' + fmtTime(price.time);
+    document.getElementById('dash-price-time').textContent = 'MAJ: ' + fmtTime(price.time);
   }
-  if (signal) {
+  if (signal && !signal.error) {
     document.getElementById('dash-signal').innerHTML = signalBadge(signal.signal);
     document.getElementById('dash-signal-indicators').innerHTML =
-      `EMA${signal.EMA_FAST || 9}: <span class="mono">${fmt(signal.EMA_FAST, 2)}</span> &middot; EMA${signal.EMA_SLOW || 20}: <span class="mono">${fmt(signal.EMA_SLOW, 2)}</span> &middot; RSI: <span class="mono">${fmt(signal.rsi, 1)}</span>`;
+      `EMA${signal.EMA_FAST ? 9 : '?'}: <span class="mono">${fmt(signal.EMA_FAST, 2)}</span> | EMA Slow: <span class="mono">${fmt(signal.EMA_SLOW, 2)}</span> | RSI: <span class="mono">${fmt(signal.rsi, 1)}</span>`;
     document.getElementById('dash-ema').textContent = `${fmt(signal.EMA_FAST, 1)} / ${fmt(signal.EMA_SLOW, 1)}`;
     document.getElementById('dash-rsi').textContent = fmt(signal.rsi, 1);
     document.getElementById('dash-rsi').style.color = signal.rsi > 70 ? 'var(--sell)' : signal.rsi < 30 ? 'var(--buy)' : 'var(--fg)';
@@ -573,7 +531,7 @@ async function initDashboard() {
   if (active && !active.error) {
     document.getElementById('dash-strategy-name').textContent = active.name;
     document.getElementById('dash-strategy-params').innerHTML =
-      `EMA ${active.ema_fast}/${active.ema_slow}/${active.ema_trend} &middot; RSI ${active.rsi_period} &middot; SL ${active.stop_loss}% &middot; TP ${active.take_profit}%`;
+      `EMA ${active.ema_fast}/${active.ema_slow}/${active.ema_trend} | RSI ${active.rsi_period} | SL ${active.stop_loss}% | TP ${active.take_profit}%`;
   }
   if (dbinfo) {
     document.getElementById('dash-db-min').textContent = fmtDateTime(dbinfo.min_timestamp);
@@ -611,12 +569,82 @@ function renderChart() {
         <button onclick="loadChart()" class="btn btn-primary btn-sm"><i class="fas fa-chart-line"></i>Charger</button>
       </div>
     </div>
-    <div class="card mb-3" style="padding:8px;">
-      <div id="trading-chart" style="height:450px;"></div>
+    <div id="chart-area">
+      ${loadingHTML('Chargement des donnees du chart...')}
     </div>
+  `;
+}
+
+async function initChart() {
+  const strategies = await api('/strategies');
+  const sel = document.getElementById('chart-strategy-select');
+  if (strategies && sel) {
+    strategies.forEach(s => {
+      const opt = document.createElement('option');
+      opt.value = s.id; opt.textContent = s.name;
+      sel.appendChild(opt);
+    });
+  }
+  await loadChart();
+}
+
+async function loadChart() {
+  const area = document.getElementById('chart-area');
+  if (area) area.innerHTML = loadingHTML('Chargement des bougies...');
+
+  const history = await api('/history');
+  if (!history || history.length === 0) {
+    if (area) area.innerHTML = '<div class="card text-center py-10"><i class="fas fa-exclamation-triangle text-3xl text-hold mb-3"></i><p class="text-muted">Aucune donnee historique. Cliquez Refresh puis reessayez.</p></div>';
+    return;
+  }
+
+  let emaFast = 9, emaSlow = 20, emaTrend = 50, rsiPeriod = 14;
+  const stratSel = document.getElementById('chart-strategy-select');
+  if (stratSel && stratSel.value) {
+    const strat = await api('/strategy/' + stratSel.value);
+    if (strat && !strat.error) {
+      emaFast = strat.ema_fast; emaSlow = strat.ema_slow;
+      emaTrend = strat.ema_trend; rsiPeriod = strat.rsi_period;
+    }
+  }
+
+  const sorted = [...history].sort((a, b) => a.timestamp - b.timestamp);
+  const closes = sorted.map(c => c.close);
+  const emaFastData = calcEMA(closes, emaFast);
+  const emaSlowData = calcEMA(closes, emaSlow);
+  const emaTrendData = calcEMA(closes, emaTrend);
+  const rsiData = calcRSI(closes, rsiPeriod);
+
+  const candleData = sorted.map(c => ({ time: c.timestamp, open: c.open, high: c.high, low: c.low, close: c.close }));
+  const emaFastLine = sorted.map((c, i) => ({ time: c.timestamp, value: emaFastData[i] }));
+  const emaSlowLine = sorted.map((c, i) => ({ time: c.timestamp, value: emaSlowData[i] }));
+  const emaTrendLine = sorted.map((c, i) => ({ time: c.timestamp, value: emaTrendData[i] }));
+  const rsiLine = sorted.map((c, i) => ({ time: c.timestamp, value: rsiData[i] }));
+  const volData = sorted.map(c => ({
+    time: c.timestamp, value: c.volume,
+    color: c.close >= c.open ? 'rgba(34,197,94,0.25)' : 'rgba(239,68,68,0.25)'
+  }));
+
+  const markers = [];
+  for (let i = 1; i < sorted.length; i++) {
+    const pf = emaFastData[i-1], cf = emaFastData[i];
+    const ps = emaSlowData[i-1], cs = emaSlowData[i];
+    const rv = rsiData[i], tv = emaTrendData[i], p = closes[i];
+    if (pf <= ps && cf > cs && rv > 55 && p > tv)
+      markers.push({ time: sorted[i].timestamp, position: 'belowBar', color: '#22c55e', shape: 'arrowUp', text: 'BUY' });
+    else if (pf >= ps && cf < cs)
+      markers.push({ time: sorted[i].timestamp, position: 'aboveBar', color: '#ef4444', shape: 'arrowDown', text: 'SELL' });
+  }
+
+  if (chartInstance) { chartInstance.remove(); chartInstance = null; }
+  if (rsiChartInstance) { rsiChartInstance.remove(); rsiChartInstance = null; }
+
+  // Render chart HTML
+  area.innerHTML = `
+    <div class="card mb-3" style="padding:8px;"><div id="trading-chart" style="height:450px;"></div></div>
     <div class="card" style="padding:8px;">
       <div class="flex items-center gap-3 mb-1 px-2">
-        <span class="text-muted text-xs font-semibold">RSI (14)</span>
+        <span class="text-muted text-xs font-semibold">RSI (${rsiPeriod})</span>
         <span class="mono text-xs" id="chart-rsi-value">---</span>
       </div>
       <div id="rsi-chart" style="height:150px;"></div>
@@ -629,95 +657,10 @@ function renderChart() {
       <span><span style="color:#ef4444;">&#9660;</span> Sell</span>
     </div>
   `;
-}
 
-async function initChart() {
-  // Charger la liste des strategies pour le select
-  const strategies = await api('/strategies');
-  const sel = document.getElementById('chart-strategy-select');
-  if (strategies && sel) {
-    strategies.forEach(s => {
-      const opt = document.createElement('option');
-      opt.value = s.id;
-      opt.textContent = s.name;
-      sel.appendChild(opt);
-    });
-  }
-  await loadChart();
-}
-
-async function loadChart() {
-  const history = await api('/history');
-  if (!history || history.length === 0) {
-    toast('Aucune donnee historique disponible', 'error');
-    return;
-  }
-
-  // Determiner les params EMA/RSI selon la strategie selectionnee
-  const stratSel = document.getElementById('chart-strategy-select');
-  let emaFast = 9, emaSlow = 20, emaTrend = 50, rsiPeriod = 14;
-  if (stratSel && stratSel.value) {
-    const strat = await api('/strategy/' + stratSel.value);
-    if (strat && !strat.error) {
-      emaFast = strat.ema_fast;
-      emaSlow = strat.ema_slow;
-      emaTrend = strat.ema_trend;
-      rsiPeriod = strat.rsi_period;
-    }
-  }
-
-  // Trier par timestamp ASC
-  const sorted = [...history].sort((a, b) => a.timestamp - b.timestamp);
-  const closes = sorted.map(c => c.close);
-  const emaFastData = calcEMA(closes, emaFast);
-  const emaSlowData = calcEMA(closes, emaSlow);
-  const emaTrendData = calcEMA(closes, emaTrend);
-  const rsiData = calcRSI(closes, rsiPeriod);
-
-  // Formater pour lightweight-charts
-  const candleData = sorted.map(c => ({
-    time: c.timestamp,
-    open: c.open,
-    high: c.high,
-    low: c.low,
-    close: c.close
-  }));
-
-  const emaFastLine = sorted.map((c, i) => ({ time: c.timestamp, value: emaFastData[i] }));
-  const emaSlowLine = sorted.map((c, i) => ({ time: c.timestamp, value: emaSlowData[i] }));
-  const emaTrendLine = sorted.map((c, i) => ({ time: c.timestamp, value: emaTrendData[i] }));
-  const rsiLine = sorted.map((c, i) => ({ time: c.timestamp, value: rsiData[i] }));
-  const volData = sorted.map(c => ({
-    time: c.timestamp,
-    value: c.volume,
-    color: c.close >= c.open ? 'rgba(34,197,94,0.25)' : 'rgba(239,68,68,0.25)'
-  }));
-
-  // Calculer les signaux buy/sell pour les markers
-  const markers = [];
-  for (let i = 1; i < sorted.length; i++) {
-    const prevFast = emaFastData[i - 1], currFast = emaFastData[i];
-    const prevSlow = emaSlowData[i - 1], currSlow = emaSlowData[i];
-    const rsiVal = rsiData[i];
-    const trendVal = emaTrendData[i];
-    const price = closes[i];
-
-    if (prevFast <= prevSlow && currFast > currSlow && rsiVal > 55 && price > trendVal) {
-      markers.push({ time: sorted[i].timestamp, position: 'belowBar', color: '#22c55e', shape: 'arrowUp', text: 'BUY' });
-    } else if (prevFast >= prevSlow && currFast < currSlow) {
-      markers.push({ time: sorted[i].timestamp, position: 'aboveBar', color: '#ef4444', shape: 'arrowDown', text: 'SELL' });
-    }
-  }
-
-  // Detruire les anciens charts
-  if (chartInstance) { chartInstance.remove(); chartInstance = null; }
-  if (rsiChartInstance) { rsiChartInstance.remove(); rsiChartInstance = null; }
-
-  // Chart principal
   const chartContainer = document.getElementById('trading-chart');
   chartInstance = LightweightCharts.createChart(chartContainer, {
-    width: chartContainer.clientWidth,
-    height: 450,
+    width: chartContainer.clientWidth, height: 450,
     layout: { background: { type: 'solid', color: 'transparent' }, textColor: '#5a6a82', fontSize: 11, fontFamily: 'JetBrains Mono' },
     grid: { vertLines: { color: 'rgba(26,37,64,0.5)' }, horzLines: { color: 'rgba(26,37,64,0.5)' } },
     crosshair: { mode: LightweightCharts.CrosshairMode.Normal },
@@ -727,83 +670,52 @@ async function loadChart() {
     handleScale: { axisPressedMouseMove: true, mouseWheel: true, pinch: true }
   });
 
-  candleSeries = chartInstance.addCandlestickSeries({
+  const cs = chartInstance.addCandlestickSeries({
     upColor: '#22c55e', downColor: '#ef4444',
     borderUpColor: '#22c55e', borderDownColor: '#ef4444',
     wickUpColor: '#22c55e80', wickDownColor: '#ef444480'
   });
-  candleSeries.setData(candleData);
-  if (markers.length > 0) candleSeries.setMarkers(markers);
+  cs.setData(candleData);
+  if (markers.length > 0) cs.setMarkers(markers);
 
-  emaFastSeries = chartInstance.addLineSeries({ color: '#10b981', lineWidth: 1, title: `EMA${emaFast}` });
-  emaFastSeries.setData(emaFastLine);
+  chartInstance.addLineSeries({ color: '#10b981', lineWidth: 1, title: `EMA${emaFast}` }).setData(emaFastLine);
+  chartInstance.addLineSeries({ color: '#f59e0b', lineWidth: 1, title: `EMA${emaSlow}` }).setData(emaSlowLine);
+  chartInstance.addLineSeries({ color: '#8b5cf6', lineWidth: 1, lineStyle: 2, title: `EMA${emaTrend}` }).setData(emaTrendLine);
 
-  emaSlowSeries = chartInstance.addLineSeries({ color: '#f59e0b', lineWidth: 1, title: `EMA${emaSlow}` });
-  emaSlowSeries.setData(emaSlowLine);
-
-  emaTrendSeries = chartInstance.addLineSeries({ color: '#8b5cf6', lineWidth: 1, lineStyle: 2, title: `EMA${emaTrend}` });
-  emaTrendSeries.setData(emaTrendLine);
-
-  volumeSeries = chartInstance.addHistogramSeries({
-    priceFormat: { type: 'volume' },
-    priceScaleId: 'volume',
-    color: '#26a69a'
-  });
-  chartInstance.priceScale('volume').applyOptions({
-    scaleMargins: { top: 0.85, bottom: 0 },
-  });
-  volumeSeries.setData(volData);
-
+  const vs = chartInstance.addHistogramSeries({ priceFormat: { type: 'volume' }, priceScaleId: 'volume' });
+  chartInstance.priceScale('volume').applyOptions({ scaleMargins: { top: 0.85, bottom: 0 } });
+  vs.setData(volData);
   chartInstance.timeScale().fitContent();
 
-  // RSI Chart
+  // RSI
   const rsiContainer = document.getElementById('rsi-chart');
   rsiChartInstance = LightweightCharts.createChart(rsiContainer, {
-    width: rsiContainer.clientWidth,
-    height: 150,
+    width: rsiContainer.clientWidth, height: 150,
     layout: { background: { type: 'solid', color: 'transparent' }, textColor: '#5a6a82', fontSize: 10, fontFamily: 'JetBrains Mono' },
     grid: { vertLines: { color: 'rgba(26,37,64,0.3)' }, horzLines: { color: 'rgba(26,37,64,0.3)' } },
     rightPriceScale: { borderColor: 'rgba(26,37,64,0.8)', scaleMargins: { top: 0.1, bottom: 0.1 } },
     timeScale: { borderColor: 'rgba(26,37,64,0.8)', timeVisible: true, visible: false },
     crosshair: { mode: LightweightCharts.CrosshairMode.Normal }
   });
-
-  rsiSeries = rsiChartInstance.addLineSeries({ color: '#a78bfa', lineWidth: 1.5 });
-  rsiSeries.setData(rsiLine);
-
-  // Lignes RSI 30/70
-  const rsi30 = sorted.map(c => ({ time: c.timestamp, value: 30 }));
-  const rsi70 = sorted.map(c => ({ time: c.timestamp, value: 70 }));
-  const rsi30Series = rsiChartInstance.addLineSeries({ color: 'rgba(34,197,94,0.3)', lineWidth: 1, lineStyle: 2 });
-  rsi30Series.setData(rsi30);
-  const rsi70Series = rsiChartInstance.addLineSeries({ color: 'rgba(239,68,68,0.3)', lineWidth: 1, lineStyle: 2 });
-  rsi70Series.setData(rsi70);
-
+  rsiChartInstance.addLineSeries({ color: '#a78bfa', lineWidth: 1.5 }).setData(rsiLine);
+  rsiChartInstance.addLineSeries({ color: 'rgba(34,197,94,0.3)', lineWidth: 1, lineStyle: 2 })
+    .setData(sorted.map(c => ({ time: c.timestamp, value: 30 })));
+  rsiChartInstance.addLineSeries({ color: 'rgba(239,68,68,0.3)', lineWidth: 1, lineStyle: 2 })
+    .setData(sorted.map(c => ({ time: c.timestamp, value: 70 })));
   rsiChartInstance.timeScale().fitContent();
 
-  // Sync time scales
-  chartInstance.timeScale().subscribeVisibleLogicalRangeChange(range => {
-    if (range) rsiChartInstance.timeScale().setVisibleLogicalRange(range);
-  });
-  rsiChartInstance.timeScale().subscribeVisibleLogicalRangeChange(range => {
-    if (range) chartInstance.timeScale().setVisibleLogicalRange(range);
-  });
+  // Sync
+  chartInstance.timeScale().subscribeVisibleLogicalRangeChange(r => { if (r) rsiChartInstance.timeScale().setVisibleLogicalRange(r); });
+  rsiChartInstance.timeScale().subscribeVisibleLogicalRangeChange(r => { if (r) chartInstance.timeScale().setVisibleLogicalRange(r); });
 
-  // Mettre a jour la valeur RSI
   const lastRSI = rsiData[rsiData.length - 1];
-  const rsiValEl = document.getElementById('chart-rsi-value');
-  if (rsiValEl) {
-    rsiValEl.textContent = fmt(lastRSI, 1);
-    rsiValEl.style.color = lastRSI > 70 ? 'var(--sell)' : lastRSI < 30 ? 'var(--buy)' : 'var(--fg)';
-  }
+  const rsiEl = document.getElementById('chart-rsi-value');
+  if (rsiEl) { rsiEl.textContent = fmt(lastRSI, 1); rsiEl.style.color = lastRSI > 70 ? 'var(--sell)' : lastRSI < 30 ? 'var(--buy)' : 'var(--fg)'; }
 
-  // Resize handler
-  const ro = new ResizeObserver(() => {
+  new ResizeObserver(() => {
     chartInstance.applyOptions({ width: chartContainer.clientWidth });
     rsiChartInstance.applyOptions({ width: rsiContainer.clientWidth });
-  });
-  ro.observe(chartContainer);
-  ro.observe(rsiContainer);
+  }).observe(chartContainer);
 }
 
 // ============ SIGNAL ============
@@ -813,24 +725,21 @@ function renderSignal() {
       <h1 class="font-display text-3xl font-bold tracking-tight">Signal de trading</h1>
       <p class="text-muted text-sm mt-1">Analyse technique en temps reel</p>
     </div>
-    <div id="signal-content" class="space-y-5">
-      <div class="card flex items-center justify-center" style="min-height:200px;">
-        <div class="text-center">
-          <div class="skeleton w-32 h-10 mx-auto mb-3"></div>
-          <div class="skeleton w-48 h-6 mx-auto"></div>
-        </div>
-      </div>
-    </div>
+    <div id="signal-content">${loadingHTML('Recuperation du signal...')}</div>
   `;
 }
 
 async function initSignal() {
+  const container = document.getElementById('signal-content');
   const signal = await api('/signal');
+
   if (!signal || signal.error) {
-    document.getElementById('signal-content').innerHTML = `
+    container.innerHTML = `
       <div class="card text-center py-10">
         <i class="fas fa-exclamation-triangle text-3xl text-hold mb-3"></i>
-        <p class="text-muted">Impossible de recuperer le signal</p>
+        <p class="text-muted mb-3">Impossible de recuperer le signal</p>
+        <p class="text-muted text-xs mb-4">${signal ? signal.error : 'Le serveur est peut-etre en veille. Patientez 30-60s puis reessayez.'}</p>
+        <button onclick="initSignal()" class="btn btn-primary btn-sm"><i class="fas fa-redo"></i>Reessayer</button>
       </div>`;
     return;
   }
@@ -842,18 +751,16 @@ async function initSignal() {
     { label: 'RSI', value: fmt(signal.rsi, 2), icon: 'fa-chart-bar', color: signal.rsi > 70 ? 'var(--sell)' : signal.rsi < 30 ? 'var(--buy)' : '#8b5cf6' }
   ];
 
-  document.getElementById('signal-content').innerHTML = `
-    <!-- Signal principal -->
+  container.innerHTML = `
     <div class="card text-center py-8" style="border-color: ${signalColor(signal.signal)}30;">
       <div class="text-muted text-xs uppercase tracking-widest mb-3">Signal actuel</div>
       <div class="text-6xl font-bold mono mb-3" style="color: ${signalColor(signal.signal)};">${signal.signal}</div>
       <div class="flex items-center justify-center gap-2">
         <div class="pulse-dot" style="background: ${signalColor(signal.signal)};"></div>
-        <span class="text-sm text-muted">${signal.pair} &middot; ${fmtTime(signal.candle_time)}</span>
+        <span class="text-sm text-muted">${signal.pair} | ${fmtTime(signal.candle_time)}</span>
       </div>
     </div>
 
-    <!-- Indicateurs -->
     <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
       ${indicators.map(ind => `
         <div class="card text-center">
@@ -864,7 +771,6 @@ async function initSignal() {
       `).join('')}
     </div>
 
-    <!-- Logique du signal -->
     <div class="card">
       <h3 class="font-semibold text-sm mb-4 flex items-center gap-2"><i class="fas fa-brain text-accent"></i>Logique de decision</h3>
       <div class="space-y-3 text-sm">
@@ -874,7 +780,7 @@ async function initSignal() {
           </div>
           <div>
             <div class="font-medium">EMA Fast ${signal.EMA_FAST > signal.EMA_SLOW ? '>' : '<'} EMA Slow</div>
-            <div class="text-muted text-xs">EMA${signal.EMA_FAST || 9} = ${fmt(signal.EMA_FAST, 2)} vs EMA${signal.EMA_SLOW || 20} = ${fmt(signal.EMA_SLOW, 2)}</div>
+            <div class="text-muted text-xs">Fast = ${fmt(signal.EMA_FAST, 2)} vs Slow = ${fmt(signal.EMA_SLOW, 2)}</div>
           </div>
         </div>
         <div class="flex items-start gap-3">
@@ -882,21 +788,20 @@ async function initSignal() {
             <i class="fas ${signal.rsi < 70 ? 'fa-check text-buy' : 'fa-times text-sell'} text-xs"></i>
           </div>
           <div>
-            <div class="font-medium">RSI ${signal.rsi < 70 ? '< 70 (non surachte)' : '>= 70 (surachte)'}</div>
-            <div class="text-muted text-xs">RSI actuel = ${fmt(signal.rsi, 2)}</div>
+            <div class="font-medium">RSI ${signal.rsi < 70 ? 'inferieur a 70' : 'superieur a 70 (surachte)'}</div>
+            <div class="text-muted text-xs">RSI = ${fmt(signal.rsi, 2)}</div>
           </div>
         </div>
         <div class="mt-3 p-3 rounded-lg" style="background: ${signalColor(signal.signal)}10; border: 1px solid ${signalColor(signal.signal)}30;">
           <div class="font-semibold" style="color: ${signalColor(signal.signal)};">
-            ${signal.signal === 'BUY' ? 'EMA fast > slow + RSI < 70 = Signal d\'achat' :
-              signal.signal === 'SELL' ? 'EMA fast < slow = Signal de vente' :
-              'Conditions mixtes = Conserver la position'}
+            ${signal.signal === 'BUY' ? 'EMA fast > slow + RSI < 70 => Signal d\'achat' :
+              signal.signal === 'SELL' ? 'EMA fast < slow => Signal de vente' :
+              'Conditions mixtes => Conserver la position'}
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Donnees brutes -->
     <div class="card">
       <h3 class="font-semibold text-sm mb-3 flex items-center gap-2"><i class="fas fa-code text-accent"></i>Reponse API brute</h3>
       <pre class="mono text-xs text-muted overflow-x-auto p-3 rounded-lg" style="background:var(--bg);">${JSON.stringify(signal, null, 2)}</pre>
@@ -907,35 +812,21 @@ async function initSignal() {
 // ============ STRATEGIES ============
 function renderStrategies() {
   return `
-    <div class="mb-6 flex items-center justify-between flex-wrap gap-3">
-      <div>
-        <h1 class="font-display text-3xl font-bold tracking-tight">Strategies</h1>
-        <p class="text-muted text-sm mt-1">Gestion des strategies de trading</p>
-      </div>
-    </div>
-    <div id="strategies-content" class="space-y-4">
-      <div class="card"><div class="skeleton w-full h-20"></div></div>
-    </div>
+    <div class="mb-6"><h1 class="font-display text-3xl font-bold tracking-tight">Strategies</h1><p class="text-muted text-sm mt-1">Gestion des strategies de trading</p></div>
+    <div id="strategies-content">${loadingHTML('Chargement des strategies...')}</div>
   `;
 }
 
 async function initStrategies() {
-  const [strategies, active] = await Promise.all([
-    api('/strategies'),
-    api('/active-strategy')
-  ]);
+  const container = document.getElementById('strategies-content');
+  const [strategies, active] = await Promise.all([api('/strategies'), api('/active-strategy')]);
 
   if (!strategies || strategies.length === 0) {
-    document.getElementById('strategies-content').innerHTML = `
-      <div class="card text-center py-10">
-        <i class="fas fa-layer-group text-3xl text-muted mb-3"></i>
-        <p class="text-muted">Aucune strategie trouvee</p>
-      </div>`;
+    container.innerHTML = '<div class="card text-center py-10"><i class="fas fa-layer-group text-3xl text-muted mb-3"></i><p class="text-muted">Aucune strategie trouvee</p></div>';
     return;
   }
 
   const activeId = active && !active.error ? active.id : null;
-
   let html = '<div class="grid gap-4">';
 
   for (const s of strategies) {
@@ -951,10 +842,7 @@ async function initStrategies() {
               <i class="fas fa-layer-group ${isActive ? 'text-accent' : 'text-muted'}"></i>
             </div>
             <div>
-              <div class="font-bold flex items-center gap-2">
-                ${detail.name}
-                ${isActive ? '<span class="badge badge-buy text-[10px]">ACTIVE</span>' : ''}
-              </div>
+              <div class="font-bold flex items-center gap-2">${detail.name} ${isActive ? '<span class="badge badge-buy text-[10px]">ACTIVE</span>' : ''}</div>
               <div class="text-muted text-xs mono">ID: ${detail.id}</div>
             </div>
           </div>
@@ -964,85 +852,50 @@ async function initStrategies() {
             ${!isActive ? `<button onclick="deleteStrategy(${detail.id}, '${detail.name}')" class="btn btn-danger btn-sm"><i class="fas fa-trash"></i></button>` : ''}
           </div>
         </div>
-
         <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 mt-4 pt-4 border-t border-[var(--border)]">
-          <div>
-            <div class="stat-label">EMA Fast</div>
-            <div class="mono font-semibold">${detail.ema_fast}</div>
-          </div>
-          <div>
-            <div class="stat-label">EMA Slow</div>
-            <div class="mono font-semibold">${detail.ema_slow}</div>
-          </div>
-          <div>
-            <div class="stat-label">EMA Trend</div>
-            <div class="mono font-semibold">${detail.ema_trend}</div>
-          </div>
-          <div>
-            <div class="stat-label">RSI</div>
-            <div class="mono font-semibold">${detail.rsi_period} / min ${detail.rsi_min}</div>
-          </div>
-          <div>
-            <div class="stat-label">SL / TP</div>
-            <div class="mono font-semibold text-sell">${detail.stop_loss}% / <span class="text-buy">${detail.take_profit}%</span></div>
-          </div>
+          <div><div class="stat-label">EMA Fast</div><div class="mono font-semibold">${detail.ema_fast}</div></div>
+          <div><div class="stat-label">EMA Slow</div><div class="mono font-semibold">${detail.ema_slow}</div></div>
+          <div><div class="stat-label">EMA Trend</div><div class="mono font-semibold">${detail.ema_trend}</div></div>
+          <div><div class="stat-label">RSI</div><div class="mono font-semibold">${detail.rsi_period} / min ${detail.rsi_min}</div></div>
+          <div><div class="stat-label">SL / TP</div><div class="mono font-semibold text-sell">${detail.stop_loss}% / <span class="text-buy">${detail.take_profit}%</span></div></div>
         </div>
-      </div>
-    `;
+      </div>`;
   }
-
   html += '</div>';
-  document.getElementById('strategies-content').innerHTML = html;
+  container.innerHTML = html;
 }
 
 async function setActiveStrategy(id) {
-  const result = await api('/active-strategy/' + id);
-  if (result && result.success) {
-    toast('Strategie activee avec succes', 'success');
-    initStrategies();
-  } else {
-    toast('Erreur lors de l\'activation', 'error');
-  }
+  const r = await api('/active-strategy/' + id);
+  if (r && r.success) { toast('Strategie activee', 'success'); initStrategies(); }
+  else toast('Erreur activation', 'error');
 }
 
 async function cloneStrategy(id) {
-  const result = await api('/strategy/' + id + '/clone', { method: 'POST' });
-  if (result && result.success) {
-    toast('Strategie clonee (ID: ' + result.new_strategy_id + ')', 'success');
-    initStrategies();
-  } else {
-    toast('Erreur lors du clonage', 'error');
-  }
+  const r = await api('/strategy/' + id + '/clone', { method: 'POST' });
+  if (r && r.success) { toast('Strategie clonee (ID: ' + r.new_strategy_id + ')', 'success'); initStrategies(); }
+  else toast('Erreur clonage', 'error');
 }
 
 function deleteStrategy(id, name) {
-  showModal(
-    'Confirmer la suppression',
-    `<p class="text-sm">Voulez-vous vraiment supprimer la strategie <strong>${name}</strong> (ID: ${id}) ?</p><p class="text-muted text-xs mt-2">Cette action est irreversible.</p>`,
+  showModal('Confirmer la suppression',
+    `<p class="text-sm">Supprimer <strong>${name}</strong> (ID: ${id}) ?</p>`,
     `<button onclick="closeModal()" class="btn btn-secondary">Annuler</button>
-     <button onclick="confirmDeleteStrategy(${id})" class="btn btn-danger"><i class="fas fa-trash"></i>Supprimer</button>`
-  );
+     <button onclick="confirmDeleteStrategy(${id})" class="btn btn-danger"><i class="fas fa-trash"></i>Supprimer</button>`);
 }
 
 async function confirmDeleteStrategy(id) {
   closeModal();
-  const result = await api('/strategy/' + id + '/delete');
-  if (result && result.success) {
-    toast('Strategie supprimee', 'success');
-    initStrategies();
-  } else {
-    toast('Erreur lors de la suppression', 'error');
-  }
+  const r = await api('/strategy/' + id + '/delete');
+  if (r && r.success) { toast('Strategie supprimee', 'success'); initStrategies(); }
+  else toast('Erreur suppression', 'error');
 }
 
 // ============ BACKTEST ============
 function renderBacktest() {
   return `
     <div class="mb-6 flex items-center justify-between flex-wrap gap-3">
-      <div>
-        <h1 class="font-display text-3xl font-bold tracking-tight">Backtest</h1>
-        <p class="text-muted text-sm mt-1">Simulation historique de la strategie</p>
-      </div>
+      <div><h1 class="font-display text-3xl font-bold tracking-tight">Backtest</h1><p class="text-muted text-sm mt-1">Simulation historique</p></div>
       <div class="flex items-center gap-2">
         <select id="bt-strategy-select" class="bg-[var(--bg3)] text-sm text-[var(--fg)] border border-[var(--border)] rounded-lg px-3 py-1.5 mono">
           <option value="">Defaut</option>
@@ -1051,10 +904,7 @@ function renderBacktest() {
       </div>
     </div>
     <div id="backtest-content">
-      <div class="card text-center py-12">
-        <i class="fas fa-flask text-4xl text-muted mb-3"></i>
-        <p class="text-muted">Cliquez sur Lancer pour executer le backtest</p>
-      </div>
+      <div class="card text-center py-12"><i class="fas fa-flask text-4xl text-muted mb-3"></i><p class="text-muted">Cliquez sur Lancer pour executer le backtest</p></div>
     </div>
   `;
 }
@@ -1062,123 +912,58 @@ function renderBacktest() {
 async function initBacktest() {
   const strategies = await api('/strategies');
   const sel = document.getElementById('bt-strategy-select');
-  if (strategies && sel) {
-    strategies.forEach(s => {
-      const opt = document.createElement('option');
-      opt.value = s.id;
-      opt.textContent = s.name;
-      sel.appendChild(opt);
-    });
-  }
+  if (strategies && sel) strategies.forEach(s => { const o = document.createElement('option'); o.value = s.id; o.textContent = s.name; sel.appendChild(o); });
 }
 
 async function runBacktest() {
   const sel = document.getElementById('bt-strategy-select');
-  const stratId = sel ? sel.value : '';
-  const endpoint = stratId ? '/backtest/' + stratId : '/backtest';
-
-  document.getElementById('backtest-content').innerHTML = `
-    <div class="card text-center py-10">
-      <i class="fas fa-spinner fa-spin text-2xl text-accent mb-3"></i>
-      <p class="text-muted">Execution du backtest en cours...</p>
-    </div>`;
+  const endpoint = sel && sel.value ? '/backtest/' + sel.value : '/backtest';
+  document.getElementById('backtest-content').innerHTML = loadingHTML('Execution du backtest (peut prendre 30-60s)...');
 
   const result = await api(endpoint);
   if (!result || result.error) {
     document.getElementById('backtest-content').innerHTML = `
       <div class="card text-center py-10">
         <i class="fas fa-exclamation-triangle text-3xl text-hold mb-3"></i>
-        <p class="text-muted">Erreur: ${result ? result.error : 'Impossible de contacter le serveur'}</p>
+        <p class="text-muted">Erreur: ${result ? result.error : 'Serveur indisponible'}</p>
+        <button onclick="runBacktest()" class="btn btn-primary btn-sm mt-3"><i class="fas fa-redo"></i>Reessayer</button>
       </div>`;
     return;
   }
-
   renderBacktestResult(result);
 }
 
 function renderBacktestResult(r) {
-  const profitPositive = r.profit >= 0;
-  const container = document.getElementById('backtest-content');
-
-  container.innerHTML = `
-    <!-- Resume -->
+  const pos = r.profit >= 0;
+  document.getElementById('backtest-content').innerHTML = `
     <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-5">
-      <div class="card text-center">
-        <div class="stat-label">Capital initial</div>
-        <div class="mono font-bold text-xl">$${fmt(r.capital_start)}</div>
-      </div>
-      <div class="card text-center">
-        <div class="stat-label">Capital final</div>
-        <div class="mono font-bold text-xl" style="color: ${profitPositive ? 'var(--buy)' : 'var(--sell)'};">$${fmt(r.capital_end)}</div>
-      </div>
-      <div class="card text-center">
-        <div class="stat-label">Profit</div>
-        <div class="mono font-bold text-xl" style="color: ${profitPositive ? 'var(--buy)' : 'var(--sell)'};">${fmtPct(r.profit_pct)}</div>
-        <div class="mono text-sm" style="color: ${profitPositive ? 'var(--buy)' : 'var(--sell)'};">$${fmt(r.profit)}</div>
-      </div>
-      <div class="card text-center">
-        <div class="stat-label">Win Rate</div>
-        <div class="mono font-bold text-xl">${fmt(r.win_rate, 1)}%</div>
-        <div class="text-xs text-muted">${r.wins}W / ${r.losses}L</div>
-      </div>
+      <div class="card text-center"><div class="stat-label">Capital initial</div><div class="mono font-bold text-xl">$${fmt(r.capital_start)}</div></div>
+      <div class="card text-center"><div class="stat-label">Capital final</div><div class="mono font-bold text-xl" style="color:${pos?'var(--buy)':'var(--sell)'};">$${fmt(r.capital_end)}</div></div>
+      <div class="card text-center"><div class="stat-label">Profit</div><div class="mono font-bold text-xl" style="color:${pos?'var(--buy)':'var(--sell)'};">${fmtPct(r.profit_pct)}</div><div class="mono text-sm" style="color:${pos?'var(--buy)':'var(--sell)'};">$${fmt(r.profit)}</div></div>
+      <div class="card text-center"><div class="stat-label">Win Rate</div><div class="mono font-bold text-xl">${fmt(r.win_rate,1)}%</div><div class="text-xs text-muted">${r.wins}W / ${r.losses}L</div></div>
     </div>
-
-    <!-- Barre de performance -->
     <div class="card mb-5">
-      <div class="flex items-center justify-between mb-2">
-        <span class="text-sm font-medium">Performance</span>
-        <span class="mono text-sm" style="color: ${profitPositive ? 'var(--buy)' : 'var(--sell)'};">${fmtPct(r.profit_pct)}</span>
-      </div>
-      <div class="progress-bar">
-        <div class="progress-fill" style="width: ${Math.min(Math.max(r.profit_pct + 10, 0), 100)}%; background: ${profitPositive ? 'var(--buy)' : 'var(--sell)'};"></div>
-      </div>
-      <div class="flex justify-between text-xs text-muted mt-1">
-        <span>-10%</span><span>0%</span><span>+10%</span>
-      </div>
+      <div class="flex items-center justify-between mb-2"><span class="text-sm font-medium">Performance</span><span class="mono text-sm" style="color:${pos?'var(--buy)':'var(--sell)'};">${fmtPct(r.profit_pct)}</span></div>
+      <div class="progress-bar"><div class="progress-fill" style="width:${Math.min(Math.max(r.profit_pct+10,0),100)}%;background:${pos?'var(--buy)':'var(--sell)'};"></div></div>
     </div>
-
-    ${r.strategy_name ? `<div class="mb-4 text-sm text-muted">Strategie: <span class="text-accent font-semibold">${r.strategy_name}</span> (ID: ${r.strategy_id})</div>` : ''}
-
-    <!-- Liste des trades -->
+    ${r.strategy_name?`<div class="mb-4 text-sm text-muted">Strategie: <span class="text-accent font-semibold">${r.strategy_name}</span> (ID: ${r.strategy_id})</div>`:''}
     <div class="card">
-      <h3 class="font-semibold text-sm mb-4 flex items-center gap-2">
-        <i class="fas fa-list text-accent"></i>Historique des trades
-        <span class="badge badge-hold text-[10px]">${r.trades_count} trades</span>
-      </h3>
-      ${r.trades && r.trades.length > 0 ? `
-        <div class="overflow-x-auto">
-          <table>
-            <thead>
-              <tr>
-                <th>#</th>
-                <th>Entree</th>
-                <th>Prix achat</th>
-                <th>Sortie</th>
-                <th>Prix vente</th>
-                <th>Raison</th>
-                <th>Capital</th>
-                <th>P&L</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${r.trades.map(t => {
-                const isWin = t.profit >= 0;
-                return `
-                  <tr>
-                    <td class="mono text-muted">${t.trade}</td>
-                    <td class="mono text-xs">${fmtTime(t.buy_time)}</td>
-                    <td class="mono">${fmt(t.buy_price, 4)}</td>
-                    <td class="mono text-xs">${fmtTime(t.sell_time)}</td>
-                    <td class="mono">${fmt(t.sell_price, 4)}</td>
-                    <td><span class="badge ${t.exit_reason === 'STOP_LOSS' ? 'badge-sell' : t.exit_reason === 'TAKE_PROFIT' ? 'badge-buy' : 'badge-hold'} text-[10px]">${t.exit_reason}</span></td>
-                    <td class="mono">$${fmt(t.capital_after)}</td>
-                    <td class="mono font-semibold" style="color: ${isWin ? 'var(--buy)' : 'var(--sell)'};">${fmtPct(t.profit_pct)}</td>
-                  </tr>`;
-              }).join('')}
-            </tbody>
-          </table>
-        </div>
-      ` : '<p class="text-muted text-sm text-center py-6">Aucun trade genere</p>'}
+      <h3 class="font-semibold text-sm mb-4 flex items-center gap-2"><i class="fas fa-list text-accent"></i>Historique des trades <span class="badge badge-hold text-[10px]">${r.trades_count} trades</span></h3>
+      ${r.trades&&r.trades.length>0?`
+        <div class="overflow-x-auto"><table>
+          <thead><tr><th>#</th><th>Entree</th><th>Prix achat</th><th>Sortie</th><th>Prix vente</th><th>Raison</th><th>Capital</th><th>P&L</th></tr></thead>
+          <tbody>${r.trades.map(t=>{const w=t.profit>=0;return`<tr>
+            <td class="mono text-muted">${t.trade}</td>
+            <td class="mono text-xs">${fmtTime(t.buy_time)}</td>
+            <td class="mono">${fmt(t.buy_price,4)}</td>
+            <td class="mono text-xs">${fmtTime(t.sell_time)}</td>
+            <td class="mono">${fmt(t.sell_price,4)}</td>
+            <td><span class="badge ${t.exit_reason==='STOP_LOSS'?'badge-sell':t.exit_reason==='TAKE_PROFIT'?'badge-buy':'badge-hold'} text-[10px]">${t.exit_reason}</span></td>
+            <td class="mono">$${fmt(t.capital_after)}</td>
+            <td class="mono font-semibold" style="color:${w?'var(--buy)':'var(--sell)'};">${fmtPct(t.profit_pct)}</td>
+          </tr>`;}).join('')}</tbody>
+        </table></div>
+      `:'<p class="text-muted text-sm text-center py-6">Aucun trade genere</p>'}
     </div>
   `;
 }
@@ -1187,333 +972,132 @@ function renderBacktestResult(r) {
 function renderCompare() {
   return `
     <div class="mb-6 flex items-center justify-between flex-wrap gap-3">
-      <div>
-        <h1 class="font-display text-3xl font-bold tracking-tight">Comparatif</h1>
-        <p class="text-muted text-sm mt-1">Comparaison des performances des strategies</p>
-      </div>
+      <div><h1 class="font-display text-3xl font-bold tracking-tight">Comparatif</h1><p class="text-muted text-sm mt-1">Comparaison des strategies</p></div>
       <button onclick="runCompare()" class="btn btn-primary"><i class="fas fa-balance-scale"></i>Comparer</button>
     </div>
     <div id="compare-content">
-      <div class="card text-center py-12">
-        <i class="fas fa-balance-scale text-4xl text-muted mb-3"></i>
-        <p class="text-muted">Cliquez sur Comparer pour lancer l'analyse</p>
-      </div>
+      <div class="card text-center py-12"><i class="fas fa-balance-scale text-4xl text-muted mb-3"></i><p class="text-muted">Cliquez sur Comparer pour lancer l'analyse</p></div>
     </div>
   `;
 }
 
 async function runCompare() {
-  document.getElementById('compare-content').innerHTML = `
-    <div class="card text-center py-10">
-      <i class="fas fa-spinner fa-spin text-2xl text-accent mb-3"></i>
-      <p class="text-muted">Comparaison en cours...</p>
-    </div>`;
-
+  document.getElementById('compare-content').innerHTML = loadingHTML('Comparaison en cours (30-60s)...');
   const result = await api('/backtest/compare');
   if (!result || !result.strategies || result.strategies.length === 0) {
-    document.getElementById('compare-content').innerHTML = `
-      <div class="card text-center py-10">
-        <i class="fas fa-exclamation-triangle text-3xl text-hold mb-3"></i>
-        <p class="text-muted">Aucun resultat de comparaison disponible</p>
-      </div>`;
+    document.getElementById('compare-content').innerHTML = '<div class="card text-center py-10"><i class="fas fa-exclamation-triangle text-3xl text-hold mb-3"></i><p class="text-muted">Aucun resultat</p></div>';
     return;
   }
-
   const best = result.best_strategy;
   const maxPct = Math.max(...result.strategies.map(s => Math.abs(s.profit_pct)), 1);
-
   let html = '';
-
-  // Meilleure strategie
   if (best) {
-    html += `
-      <div class="card mb-5" style="border-color: var(--accent); box-shadow: 0 0 20px rgba(16,185,129,0.1);">
-        <div class="flex items-center gap-3 mb-3">
-          <div class="w-10 h-10 rounded-lg flex items-center justify-center" style="background: rgba(16,185,129,0.15);">
-            <i class="fas fa-trophy text-accent"></i>
-          </div>
-          <div>
-            <div class="font-bold">Meilleure strategie: ${best.name}</div>
-            <div class="text-muted text-xs mono">ID: ${best.id}</div>
-          </div>
-        </div>
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <div><div class="stat-label">Profit</div><div class="mono font-bold text-lg" style="color: ${best.profit_pct >= 0 ? 'var(--buy)' : 'var(--sell)'};">${fmtPct(best.profit_pct)}</div></div>
-          <div><div class="stat-label">Capital final</div><div class="mono font-bold text-lg">$${fmt(best.capital_end)}</div></div>
-          <div><div class="stat-label">Win Rate</div><div class="mono font-bold text-lg">${fmt(best.win_rate, 1)}%</div></div>
-          <div><div class="stat-label">Trades</div><div class="mono font-bold text-lg">${best.trades_count} (${best.wins}W/${best.losses}L)</div></div>
-        </div>
-      </div>`;
+    html += `<div class="card mb-5" style="border-color:var(--accent);box-shadow:0 0 20px rgba(16,185,129,0.1);">
+      <div class="flex items-center gap-3 mb-3"><div class="w-10 h-10 rounded-lg flex items-center justify-center" style="background:rgba(16,185,129,0.15);"><i class="fas fa-trophy text-accent"></i></div>
+      <div><div class="font-bold">Meilleure: ${best.name}</div><div class="text-muted text-xs mono">ID: ${best.id}</div></div></div>
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div><div class="stat-label">Profit</div><div class="mono font-bold text-lg" style="color:${best.profit_pct>=0?'var(--buy)':'var(--sell)'};">${fmtPct(best.profit_pct)}</div></div>
+        <div><div class="stat-label">Capital</div><div class="mono font-bold text-lg">$${fmt(best.capital_end)}</div></div>
+        <div><div class="stat-label">Win Rate</div><div class="mono font-bold text-lg">${fmt(best.win_rate,1)}%</div></div>
+        <div><div class="stat-label">Trades</div><div class="mono font-bold text-lg">${best.trades_count} (${best.wins}W/${best.losses}L)</div></div>
+      </div></div>`;
   }
-
-  // Tableau comparatif
-  html += `
-    <div class="card mb-5">
-      <h3 class="font-semibold text-sm mb-4 flex items-center gap-2"><i class="fas fa-table text-accent"></i>Tableau comparatif</h3>
-      <div class="overflow-x-auto">
-        <table>
-          <thead>
-            <tr>
-              <th>Rang</th>
-              <th>Strategie</th>
-              <th>Profit</th>
-              <th>Capital</th>
-              <th>Trades</th>
-              <th>Win Rate</th>
-              <th>Visualisation</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${result.strategies.map((s, i) => {
-              const pctWidth = Math.abs(s.profit_pct) / maxPct * 100;
-              return `
-                <tr>
-                  <td>
-                    <span class="inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold" style="background: ${i === 0 ? 'rgba(16,185,129,0.2)' : 'var(--bg3)'}; color: ${i === 0 ? 'var(--accent)' : 'var(--muted)'};">
-                      ${i + 1}
-                    </span>
-                  </td>
-                  <td class="font-semibold">${s.name}</td>
-                  <td class="mono font-semibold" style="color: ${s.profit_pct >= 0 ? 'var(--buy)' : 'var(--sell)'};">${fmtPct(s.profit_pct)}</td>
-                  <td class="mono">$${fmt(s.capital_end)}</td>
-                  <td class="mono">${s.trades_count}</td>
-                  <td class="mono">${fmt(s.win_rate, 1)}%</td>
-                  <td style="min-width:120px;">
-                    <div class="progress-bar">
-                      <div class="progress-fill" style="width: ${pctWidth}%; background: ${s.profit_pct >= 0 ? 'var(--buy)' : 'var(--sell)'};"></div>
-                    </div>
-                  </td>
-                </tr>`;
-            }).join('')}
-          </tbody>
-        </table>
-      </div>
-    </div>`;
-
-  // Barres de comparaison visuelles
-  html += `
-    <div class="card">
-      <h3 class="font-semibold text-sm mb-4 flex items-center gap-2"><i class="fas fa-chart-bar text-accent"></i>Comparaison visuelle</h3>
-      <div class="space-y-3">
-        ${result.strategies.map(s => {
-          const pctWidth = Math.max(((s.profit_pct + maxPct) / (2 * maxPct)) * 100, 2);
-          return `
-            <div>
-              <div class="flex items-center justify-between mb-1">
-                <span class="text-sm font-medium">${s.name}</span>
-                <span class="mono text-sm" style="color: ${s.profit_pct >= 0 ? 'var(--buy)' : 'var(--sell)'};">${fmtPct(s.profit_pct)}</span>
-              </div>
-              <div class="h-8 rounded-lg relative" style="background: var(--bg3);">
-                <div class="h-full rounded-lg flex items-center px-3 transition-all duration-700" style="width: ${pctWidth}%; background: ${s.profit_pct >= 0 ? 'rgba(34,197,94,0.2)' : 'rgba(239,68,68,0.2)'}; border: 1px solid ${s.profit_pct >= 0 ? 'rgba(34,197,94,0.3)' : 'rgba(239,68,68,0.3)'};">
-                </div>
-              </div>
-            </div>`;
-        }).join('')}
-      </div>
-    </div>`;
-
+  html += `<div class="card mb-5"><h3 class="font-semibold text-sm mb-4"><i class="fas fa-table text-accent mr-2"></i>Classement</h3>
+    <div class="overflow-x-auto"><table><thead><tr><th>Rang</th><th>Strategie</th><th>Profit</th><th>Capital</th><th>Trades</th><th>Win Rate</th></tr></thead><tbody>
+    ${result.strategies.map((s,i)=>`<tr>
+      <td><span class="inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold" style="background:${i===0?'rgba(16,185,129,0.2)':'var(--bg3)'};color:${i===0?'var(--accent)':'var(--muted)'};">${i+1}</span></td>
+      <td class="font-semibold">${s.name}</td>
+      <td class="mono font-semibold" style="color:${s.profit_pct>=0?'var(--buy)':'var(--sell)'};">${fmtPct(s.profit_pct)}</td>
+      <td class="mono">$${fmt(s.capital_end)}</td>
+      <td class="mono">${s.trades_count}</td>
+      <td class="mono">${fmt(s.win_rate,1)}%</td>
+    </tr>`).join('')}</tbody></table></div></div>`;
+  html += `<div class="card"><h3 class="font-semibold text-sm mb-4"><i class="fas fa-chart-bar text-accent mr-2"></i>Visualisation</h3><div class="space-y-3">
+    ${result.strategies.map(s=>{const w=Math.max(((s.profit_pct+maxPct)/(2*maxPct))*100,2);return`<div><div class="flex items-center justify-between mb-1"><span class="text-sm font-medium">${s.name}</span><span class="mono text-sm" style="color:${s.profit_pct>=0?'var(--buy)':'var(--sell)'};">${fmtPct(s.profit_pct)}</span></div>
+    <div class="h-8 rounded-lg" style="background:var(--bg3);"><div class="h-full rounded-lg" style="width:${w}%;background:${s.profit_pct>=0?'rgba(34,197,94,0.2)':'rgba(239,68,68,0.2)'};border:1px solid ${s.profit_pct>=0?'rgba(34,197,94,0.3)':'rgba(239,68,68,0.3)'};"></div></div></div>`;}).join('')}
+  </div></div>`;
   document.getElementById('compare-content').innerHTML = html;
 }
 
 // ============ PARAMETRES ============
 function renderSettings() {
   return `
-    <div class="mb-6">
-      <h1 class="font-display text-3xl font-bold tracking-tight">Parametres</h1>
-      <p class="text-muted text-sm mt-1">Configuration du systeme</p>
-    </div>
-    <div id="settings-content" class="space-y-5">
-      <div class="card"><div class="skeleton w-full h-40"></div></div>
-    </div>
+    <div class="mb-6"><h1 class="font-display text-3xl font-bold tracking-tight">Parametres</h1><p class="text-muted text-sm mt-1">Configuration du systeme</p></div>
+    <div id="settings-content">${loadingHTML('Chargement des parametres...')}</div>
   `;
 }
 
 async function initSettings() {
-  const [settings, dbinfo, version, config] = await Promise.all([
-    api('/settings'), api('/dbinfo'), api('/version'), api('/config')
-  ]);
-
+  const container = document.getElementById('settings-content');
+  const [settings, dbinfo, version, config] = await Promise.all([api('/settings'), api('/dbinfo'), api('/version'), api('/config')]);
   let html = '';
-
-  // Parametres
   if (settings) {
-    html += `
-      <div class="card">
-        <h3 class="font-semibold text-sm mb-4 flex items-center gap-2"><i class="fas fa-sliders-h text-accent"></i>Parametres actifs</h3>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          ${Object.entries(settings).map(([key, value]) => `
-            <div class="flex items-center justify-between p-3 rounded-lg" style="background: var(--bg3);">
-              <span class="text-sm text-muted">${key}</span>
-              <span class="mono font-semibold text-sm">${value}</span>
-            </div>
-          `).join('')}
-        </div>
-      </div>`;
+    html += `<div class="card mb-5"><h3 class="font-semibold text-sm mb-4"><i class="fas fa-sliders-h text-accent mr-2"></i>Parametres actifs</h3>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">${Object.entries(settings).map(([k,v])=>`<div class="flex items-center justify-between p-3 rounded-lg" style="background:var(--bg3);"><span class="text-sm text-muted">${k}</span><span class="mono font-semibold text-sm">${v}</span></div>`).join('')}</div></div>`;
   }
-
-  // Config
   if (config) {
-    html += `
-      <div class="card">
-        <h3 class="font-semibold text-sm mb-4 flex items-center gap-2"><i class="fas fa-cog text-accent"></i>Configuration applicative</h3>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          ${Object.entries(config).map(([key, value]) => `
-            <div class="flex items-center justify-between p-3 rounded-lg" style="background: var(--bg3);">
-              <span class="text-sm text-muted">${key}</span>
-              <span class="mono font-semibold text-sm">${value}</span>
-            </div>
-          `).join('')}
-        </div>
-      </div>`;
+    html += `<div class="card mb-5"><h3 class="font-semibold text-sm mb-4"><i class="fas fa-cog text-accent mr-2"></i>Configuration</h3>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">${Object.entries(config).map(([k,v])=>`<div class="flex items-center justify-between p-3 rounded-lg" style="background:var(--bg3);"><span class="text-sm text-muted">${k}</span><span class="mono font-semibold text-sm">${v}</span></div>`).join('')}</div></div>`;
   }
-
-  // DB Info
   if (dbinfo) {
-    html += `
-      <div class="card">
-        <h3 class="font-semibold text-sm mb-4 flex items-center gap-2"><i class="fas fa-database text-accent"></i>Base de donnees</h3>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div class="p-4 rounded-lg text-center" style="background: var(--bg3);">
-            <div class="stat-label">Premier enregistrement</div>
-            <div class="mono font-semibold text-sm mt-1">${fmtDateTime(dbinfo.min_timestamp)}</div>
-          </div>
-          <div class="p-4 rounded-lg text-center" style="background: var(--bg3);">
-            <div class="stat-label">Dernier enregistrement</div>
-            <div class="mono font-semibold text-sm mt-1">${fmtDateTime(dbinfo.max_timestamp)}</div>
-          </div>
-          <div class="p-4 rounded-lg text-center" style="background: var(--bg3);">
-            <div class="stat-label">Total</div>
-            <div class="mono font-semibold text-lg mt-1 text-accent">${dbinfo.count}</div>
-          </div>
-        </div>
-      </div>`;
+    html += `<div class="card mb-5"><h3 class="font-semibold text-sm mb-4"><i class="fas fa-database text-accent mr-2"></i>Base de donnees</h3>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="p-4 rounded-lg text-center" style="background:var(--bg3);"><div class="stat-label">Premier</div><div class="mono font-semibold text-sm mt-1">${fmtDateTime(dbinfo.min_timestamp)}</div></div>
+        <div class="p-4 rounded-lg text-center" style="background:var(--bg3);"><div class="stat-label">Dernier</div><div class="mono font-semibold text-sm mt-1">${fmtDateTime(dbinfo.max_timestamp)}</div></div>
+        <div class="p-4 rounded-lg text-center" style="background:var(--bg3);"><div class="stat-label">Total</div><div class="mono font-semibold text-lg mt-1 text-accent">${dbinfo.count}</div></div>
+      </div></div>`;
   }
-
-  // Version
   if (version) {
-    html += `
-      <div class="card">
-        <h3 class="font-semibold text-sm mb-3 flex items-center gap-2"><i class="fas fa-code-branch text-accent"></i>Version</h3>
-        <div class="p-3 rounded-lg flex items-center justify-between" style="background: var(--bg3);">
-          <span class="text-muted text-sm">Version actuelle</span>
-          <span class="mono font-bold text-accent">${version.version}</span>
-        </div>
-      </div>`;
+    html += `<div class="card mb-5"><h3 class="font-semibold text-sm mb-3"><i class="fas fa-code-branch text-accent mr-2"></i>Version</h3>
+      <div class="p-3 rounded-lg flex items-center justify-between" style="background:var(--bg3);"><span class="text-muted text-sm">Version</span><span class="mono font-bold text-accent">${version.version}</span></div></div>`;
   }
-
-  // Actions
-  html += `
-    <div class="card">
-      <h3 class="font-semibold text-sm mb-4 flex items-center gap-2"><i class="fas fa-tools text-accent"></i>Actions</h3>
-      <div class="flex flex-wrap gap-3">
-        <button onclick="refreshData()" class="btn btn-primary"><i class="fas fa-sync-alt"></i>Rafraichir les donnees</button>
-        <button onclick="navigateTo('debug')" class="btn btn-secondary"><i class="fas fa-bug"></i>Debug KuCoin</button>
-        <button onclick="navigateTo('chart')" class="btn btn-secondary"><i class="fas fa-chart-area"></i>Voir le chart</button>
-      </div>
-    </div>`;
-
-  document.getElementById('settings-content').innerHTML = html;
+  html += `<div class="card"><h3 class="font-semibold text-sm mb-4"><i class="fas fa-tools text-accent mr-2"></i>Actions</h3>
+    <div class="flex flex-wrap gap-3">
+      <button onclick="refreshData()" class="btn btn-primary"><i class="fas fa-sync-alt"></i>Rafraichir</button>
+      <button onclick="navigateTo('debug')" class="btn btn-secondary"><i class="fas fa-bug"></i>Debug</button>
+      <button onclick="navigateTo('chart')" class="btn btn-secondary"><i class="fas fa-chart-area"></i>Chart</button>
+    </div></div>`;
+  container.innerHTML = html;
 }
 
 // ============ DEBUG ============
 function renderDebug() {
   return `
     <div class="mb-6 flex items-center justify-between flex-wrap gap-3">
-      <div>
-        <h1 class="font-display text-3xl font-bold tracking-tight">Debug</h1>
-        <p class="text-muted text-sm mt-1">Outils de diagnostic KuCoin API</p>
-      </div>
+      <div><h1 class="font-display text-3xl font-bold tracking-tight">Debug</h1><p class="text-muted text-sm mt-1">Diagnostic KuCoin API</p></div>
       <button onclick="runDebug()" class="btn btn-primary"><i class="fas fa-bug"></i>Tester KuCoin</button>
     </div>
     <div id="debug-content">
-      <div class="card text-center py-12">
-        <i class="fas fa-bug text-4xl text-muted mb-3"></i>
-        <p class="text-muted">Cliquez sur Tester pour verifier la connexion KuCoin</p>
-      </div>
+      <div class="card text-center py-12"><i class="fas fa-bug text-4xl text-muted mb-3"></i><p class="text-muted">Cliquez sur Tester pour verifier la connexion KuCoin</p></div>
     </div>
   `;
 }
-
 async function initDebug() {}
 
 async function runDebug() {
-  document.getElementById('debug-content').innerHTML = `
-    <div class="card text-center py-10">
-      <i class="fas fa-spinner fa-spin text-2xl text-accent mb-3"></i>
-      <p class="text-muted">Requete en cours...</p>
-    </div>`;
-
+  document.getElementById('debug-content').innerHTML = loadingHTML('Requete KuCoin en cours...');
   const result = await api('/debug');
   if (!result) {
-    document.getElementById('debug-content').innerHTML = `
-      <div class="card text-center py-10">
-        <i class="fas fa-exclamation-triangle text-3xl text-sell mb-3"></i>
-        <p class="text-sell">Impossible de contacter le serveur</p>
-      </div>`;
+    document.getElementById('debug-content').innerHTML = '<div class="card text-center py-10"><i class="fas fa-exclamation-triangle text-3xl text-sell mb-3"></i><p class="text-sell">Impossible de contacter le serveur</p></div>';
     return;
   }
-
-  let html = `
-    <div class="card mb-4">
-      <h3 class="font-semibold text-sm mb-3 flex items-center gap-2"><i class="fas fa-server text-accent"></i>Status</h3>
-      <div class="flex items-center gap-3">
-        <div class="w-3 h-3 rounded-full" style="background: ${result.status_code === 200 ? 'var(--buy)' : 'var(--sell)'};"></div>
-        <span class="mono font-bold">HTTP ${result.status_code || 'N/A'}</span>
-        ${result.error ? `<span class="text-sell text-sm">${result.error}</span>` : ''}
-      </div>
-    </div>`;
-
+  let html = `<div class="card mb-4"><h3 class="font-semibold text-sm mb-3"><i class="fas fa-server text-accent mr-2"></i>Status</h3>
+    <div class="flex items-center gap-3"><div class="w-3 h-3 rounded-full" style="background:${result.status_code===200?'var(--buy)':'var(--sell)'};"></div><span class="mono font-bold">HTTP ${result.status_code||'N/A'}</span></div></div>`;
   if (result.response) {
     const resp = result.response;
-    html += `
-      <div class="card mb-4">
-        <h3 class="font-semibold text-sm mb-3 flex items-center gap-2"><i class="fas fa-code text-accent"></i>Reponse KuCoin</h3>
-        <div class="space-y-2">
-          <div class="flex justify-between p-2 rounded" style="background:var(--bg3);">
-            <span class="text-muted text-sm">Code</span>
-            <span class="mono text-sm ${resp.code === '200000' ? 'text-buy' : 'text-sell'}">${resp.code || 'N/A'}</span>
-          </div>
-          ${resp.data ? `
-            <div class="flex justify-between p-2 rounded" style="background:var(--bg3);">
-              <span class="text-muted text-sm">Bougies retournees</span>
-              <span class="mono text-sm text-accent">${resp.data.length}</span>
-            </div>
-          ` : ''}
-        </div>
-      </div>`;
-
-    if (resp.data && resp.data.length > 0) {
-      html += `
-        <div class="card">
-          <h3 class="font-semibold text-sm mb-3 flex items-center gap-2"><i class="fas fa-table text-accent"></i>Dernieres bougies (5)</h3>
-          <div class="overflow-x-auto">
-            <table>
-              <thead><tr><th>Time</th><th>Open</th><th>Close</th><th>High</th><th>Low</th><th>Volume</th></tr></thead>
-              <tbody>
-                ${resp.data.slice(0, 5).map(c => `
-                  <tr>
-                    <td class="mono text-xs">${fmtTime(parseInt(c[0]))}</td>
-                    <td class="mono">${c[1]}</td>
-                    <td class="mono">${c[2]}</td>
-                    <td class="mono">${c[3]}</td>
-                    <td class="mono">${c[4]}</td>
-                    <td class="mono">${c[5]}</td>
-                  </tr>
-                `).join('')}
-              </tbody>
-            </table>
-          </div>
-        </div>`;
+    html += `<div class="card mb-4"><h3 class="font-semibold text-sm mb-3"><i class="fas fa-code text-accent mr-2"></i>Reponse KuCoin</h3>
+      <div class="space-y-2">
+        <div class="flex justify-between p-2 rounded" style="background:var(--bg3);"><span class="text-muted text-sm">Code</span><span class="mono text-sm ${resp.code==='200000'?'text-buy':'text-sell'}">${resp.code||'N/A'}</span></div>
+        ${resp.data?`<div class="flex justify-between p-2 rounded" style="background:var(--bg3);"><span class="text-muted text-sm">Bougies</span><span class="mono text-sm text-accent">${resp.data.length}</span></div>`:''}
+      </div></div>`;
+    if (resp.data&&resp.data.length>0) {
+      html += `<div class="card mb-4"><h3 class="font-semibold text-sm mb-3"><i class="fas fa-table text-accent mr-2"></i>Dernieres bougies (5)</h3>
+        <div class="overflow-x-auto"><table><thead><tr><th>Time</th><th>Open</th><th>Close</th><th>High</th><th>Low</th><th>Volume</th></tr></thead>
+        <tbody>${resp.data.slice(0,5).map(c=>`<tr><td class="mono text-xs">${fmtTime(parseInt(c[0]))}</td><td class="mono">${c[1]}</td><td class="mono">${c[2]}</td><td class="mono">${c[3]}</td><td class="mono">${c[4]}</td><td class="mono">${c[5]}</td></tr>`).join('')}</tbody></table></div></div>`;
     }
   }
-
-  // Reponse brute
-  html += `
-    <div class="card mt-4">
-      <h3 class="font-semibold text-sm mb-3 flex items-center gap-2"><i class="fas fa-file-code text-accent"></i>Reponse brute</h3>
-      <pre class="mono text-xs text-muted overflow-x-auto p-3 rounded-lg" style="background:var(--bg); max-height:400px;">${JSON.stringify(result, null, 2)}</pre>
-    </div>`;
-
+  html += `<div class="card"><h3 class="font-semibold text-sm mb-3"><i class="fas fa-file-code text-accent mr-2"></i>Reponse brute</h3>
+    <pre class="mono text-xs text-muted overflow-x-auto p-3 rounded-lg" style="background:var(--bg);max-height:400px;">${JSON.stringify(result,null,2)}</pre></div>`;
   document.getElementById('debug-content').innerHTML = html;
 }
 
@@ -1521,51 +1105,36 @@ async function runDebug() {
 // HEADER UPDATE
 // ============================
 async function updateHeader() {
-  const [price, signal, version] = await Promise.all([
-    api('/price'), api('/signal'), api('/version')
-  ]);
-
-  // Status
+  const [price, signal] = await Promise.all([api('/price'), api('/signal')]);
   const connected = price && !price.error;
   state.connected = connected;
   document.getElementById('hdr-status').style.background = connected ? 'var(--buy)' : 'var(--sell)';
   document.getElementById('hdr-status-text').textContent = connected ? 'En ligne' : 'Hors ligne';
-
-  // Prix
   if (price && !price.error) {
-    const priceEl = document.getElementById('hdr-price');
-    const oldPrice = state.price;
+    const el = document.getElementById('hdr-price');
+    const old = state.price;
     state.price = price.price;
-    priceEl.textContent = fmt(price.price, 4);
-    if (oldPrice !== null) {
-      priceEl.style.color = price.price > oldPrice ? 'var(--buy)' : price.price < oldPrice ? 'var(--sell)' : 'var(--fg)';
-      setTimeout(() => { priceEl.style.color = 'var(--fg)'; }, 1500);
+    el.textContent = fmt(price.price, 4);
+    if (old !== null) {
+      el.style.color = price.price > old ? 'var(--buy)' : price.price < old ? 'var(--sell)' : 'var(--fg)';
+      setTimeout(() => { el.style.color = 'var(--fg)'; }, 1500);
     }
   }
-
-  // Signal
   if (signal && !signal.error) {
     state.signal = signal.signal;
     document.getElementById('hdr-signal-dot').style.background = signalColor(signal.signal);
-    const signalText = document.getElementById('hdr-signal-text');
-    signalText.textContent = signal.signal;
-    signalText.style.color = signalColor(signal.signal);
+    const st = document.getElementById('hdr-signal-text');
+    st.textContent = signal.signal;
+    st.style.color = signalColor(signal.signal);
   }
-
-  // Version sidebar
-  if (version) {
-    document.getElementById('side-version').textContent = version.version;
-  }
-
-  // Candles sidebar
   const stats = await api('/stats');
-  if (stats) {
-    document.getElementById('side-candles').textContent = stats.stored_candles;
-  }
+  if (stats) document.getElementById('side-candles').textContent = stats.stored_candles;
+  const ver = await api('/version');
+  if (ver) document.getElementById('side-version').textContent = ver.version;
 }
 
 // ============================
-// REFRESH DATA
+// REFRESH
 // ============================
 async function refreshData() {
   const icon = document.getElementById('refresh-icon');
@@ -1575,16 +1144,9 @@ async function refreshData() {
     if (result) {
       toast(`${result.loaded} bougies chargees, ${result.stored_candles} en base`, 'success');
       await updateHeader();
-      // Re-render la page courante si c'est le chart
-      if (currentPage === 'chart') {
-        await loadChart();
-      }
-    } else {
-      toast('Erreur lors du rafraichissement', 'error');
-    }
-  } finally {
-    icon.classList.remove('fa-spin');
-  }
+      if (currentPage === 'chart') await loadChart();
+    } else toast('Erreur lors du rafraichissement', 'error');
+  } finally { icon.classList.remove('fa-spin'); }
 }
 
 // ============================
@@ -1592,13 +1154,11 @@ async function refreshData() {
 // ============================
 function startAutoRefresh() {
   if (refreshTimer) clearInterval(refreshTimer);
-  refreshTimer = setInterval(() => {
-    updateHeader();
-  }, REFRESH_INTERVAL);
+  refreshTimer = setInterval(() => updateHeader(), 60000);
 }
 
 // ============================
-// INITIALISATION
+// INIT
 // ============================
 async function init() {
   await updateHeader();
@@ -1606,9 +1166,8 @@ async function init() {
   startAutoRefresh();
 }
 
-// Raccourcis clavier
 document.addEventListener('keydown', (e) => {
-  const map = { '1': 'dashboard', '2': 'chart', '3': 'signal', '4': 'strategies', '5': 'backtest', '6': 'compare', '7': 'settings', '8': 'debug' };
+  const map = {'1':'dashboard','2':'chart','3':'signal','4':'strategies','5':'backtest','6':'compare','7':'settings','8':'debug'};
   if (map[e.key] && !e.ctrlKey && !e.metaKey && !e.altKey && document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'SELECT') {
     navigateTo(map[e.key]);
   }
