@@ -227,3 +227,4 @@ def update_strategy(strategy_id, name, ema_fast, ema_slow, ema_trend,
         ]
     )
     db.commit()
+    

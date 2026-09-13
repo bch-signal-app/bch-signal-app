@@ -26,7 +26,9 @@ app = Flask(__name__)
 CORS(app)
 
 # =========================
-# Configuration  
+# Configuration (valeurs par défaut)
+# La table `settings` en base prime sur ces constantes
+# (voir get_app_settings)
 # =========================
 APP_SYMBOL = "BCHUSDT"
 
@@ -36,6 +38,7 @@ APP_HISTORY_SIZE = 1000
 
 INITIAL_CAPITAL = 1000
 
+# En pourcentage (2.0 = 2%), unité utilisée par le backtest et le dashboard
 STOP_LOSS = 1.0
 TAKE_PROFIT = 2.0
 
@@ -47,19 +50,123 @@ EMA_SLOW = 20
 RSI_PERIOD = 14
 EMA_TREND = 50
 
+# Durée d'une bougie KuCoin en secondes, par type de timeframe
+TIMEFRAME_SECONDS = {
+    "1min": 60,
+    "3min": 180,
+    "5min": 300,
+    "15min": 900,
+    "30min": 1800,
+    "1hour": 3600,
+    "2hour": 7200,
+    "4hour": 14400,
+    "6hour": 21600,
+    "8hour": 28800,
+    "12hour": 43200,
+    "1day": 86400,
+    "1week": 604800
+}
+
+
+# =========================
+# Lecture des réglages
+# (table settings, sinon valeur par défaut)
+# =========================
+def _as_int(value, default):
+
+    try:
+        return int(float(value))
+    except (TypeError, ValueError):
+        return default
+
+
+def _as_float(value, default):
+
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return default
+
+
+def get_app_settings():
+
+    return {
+        "timeframe":
+            str(
+                get_setting(
+                    "timeframe",
+                    APP_TIMEFRAME
+                )
+            ),
+
+        "history_size":
+            _as_int(
+                get_setting("history_size", APP_HISTORY_SIZE),
+                APP_HISTORY_SIZE
+            ),
+
+        "ema_fast":
+            _as_int(
+                get_setting("ema_fast", EMA_FAST),
+                EMA_FAST
+            ),
+
+        "ema_slow":
+            _as_int(
+                get_setting("ema_slow", EMA_SLOW),
+                EMA_SLOW
+            ),
+
+        "ema_trend":
+            _as_int(
+                get_setting("ema_trend", EMA_TREND),
+                EMA_TREND
+            ),
+
+        "rsi_period":
+            _as_int(
+                get_setting("rsi_period", RSI_PERIOD),
+                RSI_PERIOD
+            ),
+
+        "stop_loss":
+            _as_float(
+                get_setting("stop_loss", STOP_LOSS),
+                STOP_LOSS
+            ),
+
+        "take_profit":
+            _as_float(
+                get_setting("take_profit", TAKE_PROFIT),
+                TAKE_PROFIT
+            ),
+
+        "initial_capital":
+            _as_float(
+                get_setting("initial_capital", INITIAL_CAPITAL),
+                INITIAL_CAPITAL
+            )
+    }
+
 # =========================
 # Récupération données KuCoin
 # =========================
 def get_data():
 
-    
+    settings = get_app_settings()
+
+    tf_seconds = TIMEFRAME_SECONDS.get(
+        settings["timeframe"],
+        3600
+    )
+
     end_at = int(time.time())
 
-    start_at = end_at - (1000 * 3600)
+    start_at = end_at - (settings["history_size"] * tf_seconds)
 
     url = (
         f"https://api.kucoin.com/api/v1/market/candles"
-        f"?type={APP_TIMEFRAME}"
+        f"?type={settings['timeframe']}"
         f"&symbol=BCH-USDT"
         f"&startAt={start_at}"
         f"&endAt={end_at}"
@@ -95,7 +202,7 @@ def get_data():
             print("No candles returned")
             return pd.DataFrame()
 
-        candles = candles[:APP_HISTORY_SIZE]
+        candles = candles[:settings["history_size"]]
         
         df = pd.DataFrame(
             candles,
@@ -127,7 +234,7 @@ def get_data():
 
         df = df.sort_values("time")
 
-        for _, row in df.tail(APP_HISTORY_SIZE).iterrows():
+        for _, row in df.tail(settings["history_size"]).iterrows():
 
             save_candle(
                 row["time"],
@@ -208,18 +315,20 @@ def dashboard():
 @app.route("/version")
 def version():
     return {
-        "version": "2026-06-09"
+        "version": "2026-09-13"
     }
 
 @app.route("/config")
 def config():
+    settings = get_app_settings()
+
     return jsonify({
         "symbol": APP_SYMBOL,
-        "timeframe": APP_TIMEFRAME,
-        "history_size": APP_HISTORY_SIZE,
-        "ema_fast": EMA_FAST,
-        "ema_slow": EMA_SLOW,
-        "rsi_period": RSI_PERIOD
+        "timeframe": settings["timeframe"],
+        "history_size": settings["history_size"],
+        "ema_fast": settings["ema_fast"],
+        "ema_slow": settings["ema_slow"],
+        "rsi_period": settings["rsi_period"]
     })
 
 
@@ -319,19 +428,21 @@ def signal():
 
     try:
 
+        settings = get_app_settings()
+
         df["EMA_FAST"] = ema(
         df["close"],
-        EMA_FAST
+        settings["ema_fast"]
         )
 
         df["EMA_SLOW"] = ema(
         df["close"],
-        EMA_SLOW
+        settings["ema_slow"]
         )
 
         df["rsi"] = rsi(
         df["close"],
-        RSI_PERIOD
+        settings["rsi_period"]
         )
 
         last = df.iloc[-1]
@@ -413,7 +524,7 @@ def stats():
 @app.route("/history")
 def history():
 
-    rows = get_last_candles(APP_HISTORY_SIZE)
+    rows = get_last_candles(get_app_settings()["history_size"])
 
     data = []
 
@@ -487,20 +598,22 @@ def strategy(strategy_id):
 @app.route("/backtest")
 def backtest():
 
-    rows = get_last_candles(APP_HISTORY_SIZE)
+    settings = get_app_settings()
+
+    rows = get_last_candles(settings["history_size"])
 
     result = run_backtest(
     rows,
     ema,
     rsi,
-    EMA_FAST,
-    EMA_SLOW,
-    EMA_TREND,
-    RSI_PERIOD,
-    INITIAL_CAPITAL,
+    settings["ema_fast"],
+    settings["ema_slow"],
+    settings["ema_trend"],
+    settings["rsi_period"],
+    settings["initial_capital"],
     APP_TRADING_FEE,
-    STOP_LOSS,
-    TAKE_PROFIT
+    settings["stop_loss"],
+    settings["take_profit"]
     )
 
     return jsonify(result)
@@ -511,70 +624,7 @@ def backtest():
 @app.route("/settings")
 def settings():
 
-    return jsonify({
-
-        "timeframe":
-            get_setting(
-                "timeframe",
-                "1hour"
-            ),
-
-        "history_size":
-            int(
-                get_setting(
-                    "history_size",
-                    100
-                )
-            ),
-
-        "ema_fast":
-            int(
-                get_setting(
-                    "ema_fast",
-                    9
-                )
-            ),
-
-        "ema_slow":
-            int(
-                get_setting(
-                    "ema_slow",
-                    20
-                )
-            ),
-
-        "rsi_period":
-            int(
-                get_setting(
-                    "rsi_period",
-                    14
-                )
-            ),
-
-        "take_profit":
-            float(
-                get_setting(
-                    "take_profit",
-                    0.05
-                )
-            ),
-
-        "stop_loss":
-            float(
-                get_setting(
-                    "stop_loss",
-                    0.02
-                )
-            ),
-
-        "initial_capital":
-            float(
-                get_setting(
-                    "initial_capital",
-                    1000
-                )
-            )
-    })
+    return jsonify(get_app_settings())
 
 # =========================
 # settings/update
@@ -735,7 +785,7 @@ def backtest_strategy(strategy_id):
             "error": "strategy not found"
         })
 
-    rows = get_last_candles(APP_HISTORY_SIZE)
+    rows = get_last_candles(get_app_settings()["history_size"])
 
     result = run_backtest(
         rows,
@@ -768,7 +818,7 @@ def backtest_strategy(strategy_id):
 @app.route("/backtest/compare")
 def compare_backtests():
 
-    rows = get_last_candles(APP_HISTORY_SIZE)
+    rows = get_last_candles(get_app_settings()["history_size"])
 
     strategies = get_strategies()
 
