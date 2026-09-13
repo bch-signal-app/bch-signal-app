@@ -1,12 +1,9 @@
 from flask import Flask, jsonify, make_response, render_template, request
 from flask_cors import CORS
-import requests
 import pandas as pd
 import os
-import time
 from datetime import datetime
 
-from db import save_candle
 from db import count_candles
 from db import get_last_candles
 from db import set_setting
@@ -19,6 +16,7 @@ from db import get_strategy
 from db import clone_strategy
 from db import delete_strategy
 from db import update_strategy
+from kucoin import update_candles
 
 
 
@@ -62,6 +60,8 @@ CORS(app)
 # (voir get_app_settings)
 # =========================
 APP_SYMBOL = "BCHUSDT"
+
+API_SYMBOL = "BCH-USDT"
 
 APP_TIMEFRAME = "1hour"
 
@@ -187,7 +187,9 @@ def get_app_settings():
     }
 
 # =========================
-# Récupération données KuCoin
+# Recuperation donnees KuCoin
+# Mise a jour incrementielle : la base DuckDB conserve tout,
+# on ne telecharge que les bougies manquantes.
 # =========================
 def get_data():
 
@@ -198,100 +200,37 @@ def get_data():
         3600
     )
 
-    end_at = int(time.time())
-
-    start_at = end_at - (settings["history_size"] * tf_seconds)
-
-    url = (
-        f"https://api.kucoin.com/api/v1/market/candles"
-        f"?type={settings['timeframe']}"
-        f"&symbol=BCH-USDT"
-        f"&startAt={start_at}"
-        f"&endAt={end_at}"
+    update_candles(
+        API_SYMBOL,
+        APP_SYMBOL,
+        settings["timeframe"],
+        tf_seconds,
+        target=settings["history_size"]
     )
 
-    print(url)
-    
-    
-#     url = (
-#     f"https://api.kucoin.com/api/v1/market/candles"
-#     f"?type={TIMEFRAME}"
-#     f"&symbol=BCH-USDT"
-# )
+    rows = db.execute(
+        "SELECT timestamp, open, high, low, close, volume "
+        "FROM candles WHERE symbol = ? "
+        "ORDER BY timestamp DESC LIMIT ?",
+        [APP_SYMBOL, settings["history_size"]]
+    ).fetchall()
 
-    try:
+    if not rows:
+        return pd.DataFrame()
 
-        response = requests.get(url, timeout=15)
-
-        if response.status_code != 200:
-            print("HTTP Error:", response.status_code)
-            return pd.DataFrame()
-
-        data = response.json()
-
-        if data.get("code") != "200000":
-            print("KuCoin Error:", data)
-            return pd.DataFrame()
-
-        candles = data.get("data", [])
-        print("KuCoin returned:", len(candles))
-
-        if len(candles) == 0:
-            print("No candles returned")
-            return pd.DataFrame()
-
-        candles = candles[:settings["history_size"]]
-        
-        df = pd.DataFrame(
-            candles,
-            columns=[
-                "time",
-                "open",
-                "close",
-                "high",
-                "low",
-                "volume",
-                "turnover"
-            ]
-        )
-
-        # Conversion numérique
-        for col in [
+    df = pd.DataFrame(
+        rows,
+        columns=[
+            "time",
             "open",
             "high",
             "low",
             "close",
             "volume"
-        ]:
-            df[col] = pd.to_numeric(
-                df[col],
-                errors="coerce"
-            )
+        ]
+    )
 
-        df = df.dropna()
-
-        df = df.sort_values("time")
-
-        for _, row in df.tail(settings["history_size"]).iterrows():
-
-            save_candle(
-                row["time"],
-                APP_SYMBOL,
-                row["open"],
-                row["high"],
-                row["low"],
-                row["close"],
-                row["volume"]
-            )
-        print("Rows loaded:", len(df))
-
-        return df
-
-    except Exception as e:
-
-        print("ERROR get_data():", str(e))
-
-        return pd.DataFrame()
+    return df.sort_values("time")
 # =========================
 # EMA
 # =========================
