@@ -8,6 +8,7 @@ def run_backtest(
     EMA_SLOW,
     EMA_TREND,
     RSI_PERIOD,
+    RSI_MIN,
     INITIAL_CAPITAL,
     TRADING_FEE,
     STOP_LOSS,
@@ -112,7 +113,7 @@ def run_backtest(
             and
             curr_fast > curr_slow
             and
-            rsi_value > 55
+            rsi_value > RSI_MIN
             and price > trend_value
         )
 
@@ -216,6 +217,56 @@ def run_backtest(
             current_trade = None
 
             position = 0
+
+    # Position encore ouverte a la fin : on la valorise au dernier
+    # cours, sinon le capital final serait compte pour 0
+    if position > 0 and current_trade is not None:
+
+        price = float(df.iloc[-1]["close"])
+        timestamp = int(df.iloc[-1]["time"])
+
+        capital = (
+            position
+            * price
+            * (1 - TRADING_FEE)
+        )
+
+        profit = (
+            capital
+            - current_trade["capital_before"]
+        )
+
+        profit_pct = (
+            profit
+            / current_trade["capital_before"]
+        ) * 100
+
+        if profit > 0:
+            wins += 1
+        else:
+            losses += 1
+
+        current_trade.update({
+
+            "exit_reason": "FIN",
+
+            "sell_time": timestamp,
+
+            "sell_price": round(price, 4),
+
+            "capital_after": round(capital, 2),
+
+            "profit": round(profit, 2),
+
+            "profit_pct": round(profit_pct, 2)
+
+        })
+
+        trades.append(current_trade)
+
+        current_trade = None
+
+        position = 0
 
     capital_end = capital
 

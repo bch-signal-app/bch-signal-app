@@ -79,6 +79,7 @@ EMA_FAST = 9
 EMA_SLOW = 20
 
 RSI_PERIOD = 14
+RSI_MIN = 55
 EMA_TREND = 50
 
 # Durée d'une bougie KuCoin en secondes, par type de timeframe
@@ -158,6 +159,12 @@ def get_app_settings():
             _as_int(
                 get_setting("rsi_period", RSI_PERIOD),
                 RSI_PERIOD
+            ),
+
+        "rsi_min":
+            _as_int(
+                get_setting("rsi_min", RSI_MIN),
+                RSI_MIN
             ),
 
         "stop_loss":
@@ -653,6 +660,7 @@ def backtest():
     settings["ema_slow"],
     settings["ema_trend"],
     settings["rsi_period"],
+    settings["rsi_min"],
     settings["initial_capital"],
     APP_TRADING_FEE,
     settings["stop_loss"],
@@ -840,6 +848,7 @@ def backtest_strategy(strategy_id):
         row[4],  # EMA_TREND
 
         row[5],  # RSI_PERIOD
+        row[6],  # RSI_MIN
 
         row[9],  # INITIAL_CAPITAL
 
@@ -879,6 +888,7 @@ def compare_backtests():
             row[4],
 
             row[5],
+            row[6],  # RSI_MIN
 
             row[9],
 
