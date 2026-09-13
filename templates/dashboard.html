@@ -415,7 +415,7 @@ function renderDashboard() {
     <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-5">
       <div class="card text-center"><div class="stat-label">Bougies</div>${slot('dash-candles')}</div>
       <div class="card text-center"><div class="stat-label">Timeframe</div>${slot('dash-timeframe')}</div>
-      <div class="card text-center"><div class="stat-label">EMA Fast / Slow</div>${slot('dash-ema')}</div>
+      <div class="card text-center"><div class="stat-label" id="dash-ema-label">EMA (valeur $)</div>${slot('dash-ema')}</div>
       <div class="card text-center"><div class="stat-label">RSI</div>${slot('dash-rsi')}</div>
     </div>
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -449,7 +449,8 @@ async function initDashboard() {
         safeText('dash-price-time', 'MAJ: ' + fmtTime(sig.candle_time));
         fillSlot('dash-signal', signalBadge(sig.signal));
         safeHTML('dash-signal-indicators',
-            `EMA Fast: <span class="mono">${fmt(sig.EMA_FAST,2)}</span> | EMA Slow: <span class="mono">${fmt(sig.EMA_SLOW,2)}</span> | RSI: <span class="mono">${fmt(sig.rsi,1)}</span>`);
+            `EMA${sig.ema_fast_period}: <span class="mono">${fmt(sig.EMA_FAST,2)}</span> $ | EMA${sig.ema_slow_period}: <span class="mono">${fmt(sig.EMA_SLOW,2)}</span> $ | RSI: <span class="mono">${fmt(sig.rsi,1)}</span>`);
+        safeText('dash-ema-label', `EMA ${sig.ema_fast_period} / ${sig.ema_slow_period} ($)`);
         fillSlot('dash-ema', `<span class="mono font-semibold">${fmt(sig.EMA_FAST,1)} / ${fmt(sig.EMA_SLOW,1)}</span>`);
         fillSlot('dash-rsi', `<span class="mono font-semibold" style="color:${sig.rsi>70?'var(--sell)':sig.rsi<30?'var(--buy)':'var(--fg)'}">${fmt(sig.rsi,1)}</span>`);
         safeText('hdr-price', fmt(sig.price,4));
@@ -607,9 +608,9 @@ async function loadChart() {
       <div id="rsi-chart" style="height:150px"></div>
     </div>
     <div class="mt-3 flex items-center gap-4 text-xs text-muted">
-      <span><span style="color:#10b981">___</span> EMA Fast</span>
-      <span><span style="color:#f59e0b">___</span> EMA Slow</span>
-      <span><span style="color:#8b5cf6">___</span> EMA Trend</span>
+      <span><span style="color:#10b981">___</span> EMA ${emaFast}</span>
+      <span><span style="color:#f59e0b">___</span> EMA ${emaSlow}</span>
+      <span><span style="color:#8b5cf6">___</span> EMA ${emaTrend}</span>
     </div>`;
 
   const cc = document.getElementById('trading-chart');
@@ -689,8 +690,8 @@ async function initSignal() {
 
     const indicators = [
         {label:'Prix',value:fmt(signal.price,4),icon:'fa-dollar-sign',color:'var(--accent)'},
-        {label:'EMA Fast',value:fmt(signal.EMA_FAST,4),icon:'fa-bolt',color:'#10b981'},
-        {label:'EMA Slow',value:fmt(signal.EMA_SLOW,4),icon:'fa-wave-square',color:'#f59e0b'},
+        {label:'EMA '+signal.ema_fast_period, value:'$'+fmt(signal.EMA_FAST,4), icon:'fa-bolt', color:'#10b981'},
+        {label:'EMA '+signal.ema_slow_period, value:'$'+fmt(signal.EMA_SLOW,4), icon:'fa-wave-square', color:'#f59e0b'},
         {label:'RSI',value:fmt(signal.rsi,2),icon:'fa-chart-bar',color:signal.rsi>70?'var(--sell)':signal.rsi<30?'var(--buy)':'#8b5cf6'}
     ];
 

@@ -484,6 +484,8 @@ def signal():
 
         settings = get_app_settings()
 
+        tf = settings["timeframe"]
+
         df["EMA_FAST"] = ema(
         df["close"],
         settings["ema_fast"]
@@ -542,6 +544,14 @@ def signal():
                 rsi_value,
                 2
             ),
+
+            "timeframe": tf,
+
+            "ema_fast_period": settings["ema_fast"],
+
+            "ema_slow_period": settings["ema_slow"],
+
+            "rsi_period": settings["rsi_period"],
 
             "rows": len(df),
 
