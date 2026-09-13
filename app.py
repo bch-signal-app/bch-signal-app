@@ -24,9 +24,9 @@ from db import update_strategy
 
 # =========================
 # Version affichee dans le dashboard
-# build.txt est incremente a chaque commit par hooks/pre-commit
-# (format "AAAA-MM-JJ N" : N repart a 1 chaque nouveau jour, max 9999)
-# Le fichier est dans le depot : local et Render affichent le meme numero
+# build.txt = nombre total de commits du projet, ecrit a chaque
+# commit par hooks/pre-commit. Le fichier est dans le depot :
+# local et Render affichent le meme numero.
 # =========================
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -35,15 +35,17 @@ def read_build():
 
     try:
         with open(os.path.join(BASE_DIR, "build.txt")) as f:
-            date_part, number = f.read().strip().split()
-        return date_part, int(number)
+            return int(f.read().strip())
     except (OSError, ValueError):
-        return datetime.now().strftime("%Y-%m-%d"), 0
+        return 0
 
 
-BUILD_DATE, BUILD_NUMBER = read_build()
+BUILD_NUMBER = read_build()
 
-APP_VERSION = f"{BUILD_DATE}.{BUILD_NUMBER}"
+APP_VERSION = (
+    f"{datetime.now():%Y-%m-%d}."
+    f"{BUILD_NUMBER}"
+)
 
 APP_COMMIT = os.environ.get("RENDER_GIT_COMMIT", "")[:7]
 
