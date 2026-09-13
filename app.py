@@ -1,9 +1,11 @@
-from flask import Flask, jsonify, render_template, request
+from flask import Flask, jsonify, make_response, render_template, request
 from flask_cors import CORS
 import requests
 import pandas as pd
 import os
 import time
+import hashlib
+from datetime import datetime
 
 from db import save_candle
 from db import count_candles
@@ -19,6 +21,46 @@ from db import clone_strategy
 from db import delete_strategy
 from db import update_strategy
 
+
+
+# =========================
+# Version affichee dans le dashboard
+# =========================
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+
+def compute_app_version():
+
+    date_part = datetime.now().strftime("%Y-%m-%d")
+
+    # Sur Render, le SHA du commit deploye prouve que le
+    # deploiement correspond bien au code pousse
+    commit = os.environ.get("RENDER_GIT_COMMIT", "")
+
+    if commit:
+        return f"{date_part}.{commit[:7]}"
+
+    # En local : empreinte du code source,
+    # change des qu'un fichier change
+    source_hash = hashlib.md5()
+
+    for fname in [
+        "app.py",
+        "db.py",
+        "backtest.py",
+        os.path.join("templates", "dashboard.html")
+    ]:
+
+        fpath = os.path.join(BASE_DIR, fname)
+
+        if os.path.exists(fpath):
+            with open(fpath, "rb") as f:
+                source_hash.update(f.read())
+
+    return f"{date_part}.{source_hash.hexdigest()[:7]}"
+
+
+APP_VERSION = compute_app_version()
 
 
 app = Flask(__name__)
@@ -307,7 +349,17 @@ def home():
 # =========================
 @app.route("/dashboard")
 def dashboard():
-    return render_template("dashboard.html")
+    resp = make_response(
+        render_template(
+            "dashboard.html",
+            app_version=APP_VERSION
+        )
+    )
+
+    # Garantit un badge de version toujours a jour (pas de cache navigateur)
+    resp.headers["Cache-Control"] = "no-store"
+
+    return resp
 
 # =========================
 # version
@@ -315,7 +367,7 @@ def dashboard():
 @app.route("/version")
 def version():
     return {
-        "version": "2026-09-13"
+        "version": APP_VERSION
     }
 
 @app.route("/config")
