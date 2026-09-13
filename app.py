@@ -380,7 +380,9 @@ def config():
         "history_size": settings["history_size"],
         "ema_fast": settings["ema_fast"],
         "ema_slow": settings["ema_slow"],
-        "rsi_period": settings["rsi_period"]
+        "ema_trend": settings["ema_trend"],
+        "rsi_period": settings["rsi_period"],
+        "rsi_min": settings["rsi_min"]
     })
 
 
