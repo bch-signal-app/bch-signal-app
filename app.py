@@ -62,6 +62,10 @@ def compute_app_version():
 
 APP_VERSION = compute_app_version()
 
+APP_COMMIT = os.environ.get("RENDER_GIT_COMMIT", "")[:7]
+
+APP_BRANCH = os.environ.get("RENDER_GIT_BRANCH", "")
+
 
 app = Flask(__name__)
 
@@ -367,7 +371,9 @@ def dashboard():
 @app.route("/version")
 def version():
     return {
-        "version": APP_VERSION
+        "version": APP_VERSION,
+        "commit": APP_COMMIT or "local",
+        "branch": APP_BRANCH or "local"
     }
 
 @app.route("/config")
