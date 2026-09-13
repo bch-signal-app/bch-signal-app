@@ -90,6 +90,24 @@ for _col, _typ, _default in [
             f"ALTER TABLE strategies ADD COLUMN {_col} {_typ} DEFAULT {_default}"
         )
 
+# Passage unique au timeframe 4h par defaut : les strategies creees
+# avant l'existence du champ etaient implicitement en 1h
+_migrated = db.execute(
+    "SELECT value FROM settings WHERE key = 'strategy_tf_migrated'"
+).fetchone()
+
+if not _migrated:
+    db.execute(
+        "UPDATE strategies SET timeframe = '4hour' WHERE timeframe = '1hour'"
+    )
+    db.execute(
+        "UPDATE settings SET value = '4hour' "
+        "WHERE key = 'timeframe' AND value = '1hour'"
+    )
+    db.execute(
+        "INSERT OR REPLACE INTO settings VALUES ('strategy_tf_migrated', '1')"
+    )
+
 db.commit()
 
 
@@ -116,7 +134,7 @@ def save_candle(timestamp, symbol, open_price, high_price, low_price, close_pric
 
 def create_strategy(name, ema_fast, ema_slow, ema_trend, rsi_period, rsi_min,
                     stop_loss, take_profit, initial_capital,
-                    timeframe="1hour", sl_mode="percent", atr_period=14,
+                    timeframe="4hour", sl_mode="percent", atr_period=14,
                     sl_atr=2.0, tp_atr=4.0, risk_pct=0.0, regime_ema=0):
     next_id = db.execute(
         """

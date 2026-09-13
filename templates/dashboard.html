@@ -541,7 +541,7 @@ function renderChart() {
     <div class="mb-5 flex items-center justify-between flex-wrap gap-3">
       <div><h1 class="font-display text-3xl font-bold tracking-tight">Chart</h1><p class="text-muted text-sm mt-1">BCHUSDT avec indicateurs</p></div>
       <div class="flex items-center gap-2">
-        <select id="chart-strategy-select" class="bg-[var(--bg3)] text-sm text-[var(--fg)] border border-[var(--border)] rounded-lg px-3 py-1.5 mono"><option value="">Defaut</option></select>
+        <select id="chart-strategy-select" class="bg-[var(--bg3)] text-sm text-[var(--fg)] border border-[var(--border)] rounded-lg px-3 py-1.5 mono"><option value="">Defaut (strategie active)</option></select>
         <button onclick="loadChart()" class="btn btn-primary btn-sm"><i class="fas fa-chart-line"></i>Charger</button>
       </div>
     </div>
@@ -556,6 +556,7 @@ async function initChart() {
   if (strats && sel) strats.forEach(s => { const o=document.createElement('option');o.value=s.id;o.textContent=s.name;sel.appendChild(o); });
   const act = await api('/active-strategy');
   if (act && !act.error && sel) sel.value = String(act.id);
+  loadChart();
 }
 
 async function loadChart() {
@@ -962,85 +963,6 @@ async function saveStrategyEdit(id) {
     }
 }
 
-// Ouvrir le modal des parametres
-async function editSettingsModal() {
-    const settings = await api('/settings');
-    if (!settings) {
-        toast('Erreur chargement parametres', 'error');
-        return;
-    }
-
-    const fields = [
-        { key: 'timeframe', label: 'Timeframe', type: 'text', placeholder: '1hour, 4hour, etc.' },
-        { key: 'history_size', label: 'Taille historique', type: 'number' },
-        { key: 'ema_fast', label: 'EMA Fast', type: 'number' },
-        { key: 'ema_slow', label: 'EMA Slow', type: 'number' },
-        { key: 'rsi_period', label: 'RSI Periode', type: 'number' },
-        { key: 'stop_loss', label: 'Stop Loss (%)', type: 'number', step: '0.1' },
-        { key: 'take_profit', label: 'Take Profit (%)', type: 'number', step: '0.1' },
-        { key: 'initial_capital', label: 'Capital initial ($)', type: 'number', step: '100' }
-    ];
-
-    let formHtml = '<div class="space-y-3">';
-    fields.forEach(f => {
-        formHtml += `
-            <div>
-                <label class="text-xs text-muted block mb-1">${f.label}</label>
-                <input 
-                    type="${f.type}" 
-                    id="setting-${f.key}" 
-                    value="${settings[f.key] !== undefined ? settings[f.key] : ''}" 
-                    ${f.step ? `step="${f.step}"` : ''}
-                    ${f.placeholder ? `placeholder="${f.placeholder}"` : ''}
-                    class="w-full bg-[var(--bg3)] text-[var(--fg)] border border-[var(--border)] rounded-lg px-3 py-2 text-sm mono" 
-                />
-            </div>
-        `;
-    });
-    formHtml += '</div>';
-
-    showModal(
-        'Modifier les parametres',
-        formHtml,
-        `<button onclick="closeModal()" class="btn btn-secondary">Annuler</button>
-         <button onclick="saveSettingsEdit()" class="btn btn-primary"><i class="fas fa-save"></i>Sauvegarder</button>`
-    );
-}
-
-// Sauvegarder les parametres
-async function saveSettingsEdit() {
-    const keys = ['timeframe', 'history_size', 'ema_fast', 'ema_slow', 'rsi_period', 'stop_loss', 'take_profit', 'initial_capital'];
-    const data = {};
-
-    keys.forEach(k => {
-        const el = document.getElementById(`setting-${k}`);
-        if (el) data[k] = el.value;
-    });
-
-    // Validation basique
-    const emaFast = parseInt(data.ema_fast);
-    const emaSlow = parseInt(data.ema_slow);
-    if (emaFast >= emaSlow) {
-        toast('EMA Fast doit etre inferieur a EMA Slow', 'error');
-        return;
-    }
-
-    const result = await api('/settings/update', {
-        method: 'POST',
-        body: JSON.stringify(data)
-    });
-
-    if (result && result.success) {
-        closeModal();
-        toast('Parametres mis a jour', 'success');
-        initSettings();
-        updateHeader();
-    } else {
-        toast('Erreur lors de la mise a jour', 'error');
-    }
-}
-
-
 // ============================
 // BACKTEST
 // ============================
@@ -1187,21 +1109,46 @@ async function initSettings() {
     const settings = await api('/settings');
     if (!stillOnPage('settings')) return;
 
+    const act = await api('/active-strategy');
+    if (!stillOnPage('settings')) return;
+
+    if (act && !act.error) {
+        html += `
+        <div class="card mb-5" style="border-color:var(--accent)">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="font-semibold text-sm"><i class="fas fa-layer-group text-accent mr-2"></i>Strategie active (lecture seule)</h3>
+                <span class="badge badge-buy">${act.name}</span>
+            </div>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div class="p-3 rounded-lg" style="background:var(--bg3)"><div class="stat-label">Timeframe</div><div class="mono font-semibold text-sm mt-1">${act.timeframe||'1hour'}</div></div>
+                <div class="p-3 rounded-lg" style="background:var(--bg3)"><div class="stat-label">EMA F/S/T</div><div class="mono font-semibold text-sm mt-1">${act.ema_fast}/${act.ema_slow}/${act.ema_trend}</div></div>
+                <div class="p-3 rounded-lg" style="background:var(--bg3)"><div class="stat-label">RSI</div><div class="mono font-semibold text-sm mt-1">${act.rsi_period} / min ${act.rsi_min}</div></div>
+                <div class="p-3 rounded-lg" style="background:var(--bg3)"><div class="stat-label">Stops</div><div class="mono font-semibold text-sm mt-1">${act.sl_mode==='atr'?act.sl_atr+'xATR / '+act.tp_atr+'xATR':act.stop_loss+'% / '+act.take_profit+'%'}</div></div>
+                <div class="p-3 rounded-lg" style="background:var(--bg3)"><div class="stat-label">Risque/trade</div><div class="mono font-semibold text-sm mt-1">${act.risk_pct>0?act.risk_pct+'%':'All-in'}</div></div>
+                <div class="p-3 rounded-lg" style="background:var(--bg3)"><div class="stat-label">Regime</div><div class="mono font-semibold text-sm mt-1">${act.regime_ema>0?('EMA '+act.regime_ema):'-'}</div></div>
+                <div class="p-3 rounded-lg" style="background:var(--bg3)"><div class="stat-label">Capital</div><div class="mono font-semibold text-sm mt-1">$${act.initial_capital}</div></div>
+                <div class="p-3 rounded-lg flex items-center justify-between" style="background:var(--bg3)"><span class="text-xs text-muted">Modification via</span><button onclick="navigateTo('strategies')" class="btn btn-secondary btn-sm">Strategies</button></div>
+            </div>
+        </div>`;
+    }
+
     if (settings) {
+        const general = { history_size: settings.history_size };
         html += `
         <div class="card mb-5">
             <div class="flex items-center justify-between mb-4">
-                <h3 class="font-semibold text-sm"><i class="fas fa-sliders-h text-accent mr-2"></i>Parametres actifs</h3>
+                <h3 class="font-semibold text-sm"><i class="fas fa-sliders-h text-accent mr-2"></i>Parametres generaux</h3>
                 <button onclick="editSettingsModal()" class="btn btn-primary btn-sm"><i class="fas fa-edit"></i>Modifier</button>
             </div>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                ${Object.entries(settings).map(([k,v]) => `
+                ${Object.entries(general).map(([k,v]) => `
                     <div class="flex items-center justify-between p-3 rounded-lg" style="background:var(--bg3)">
                         <span class="text-sm text-muted">${k}</span>
                         <span class="mono font-semibold text-sm">${v}</span>
                     </div>
                 `).join('')}
             </div>
+            <div class="text-xs text-muted mt-3">Les parametres propres a la strategie (timeframe, EMAs, stops, risque, regime) se modifient dans la page Strategies et s'appliquent a l'activation.</div>
         </div>`;
     } else {
         html += '<div class="card mb-5"><p class="text-muted">Impossible de charger les parametres</p></div>';
@@ -1304,14 +1251,7 @@ async function editSettingsModal() {
     }
 
     const fields = [
-        { key: 'timeframe', label: 'Timeframe', type: 'text', placeholder: '1hour, 4hour, etc.' },
-        { key: 'history_size', label: 'Taille historique', type: 'number' },
-        { key: 'ema_fast', label: 'EMA Fast', type: 'number' },
-        { key: 'ema_slow', label: 'EMA Slow', type: 'number' },
-        { key: 'rsi_period', label: 'RSI Periode', type: 'number' },
-        { key: 'stop_loss', label: 'Stop Loss (%)', type: 'number', step: '0.1' },
-        { key: 'take_profit', label: 'Take Profit (%)', type: 'number', step: '0.1' },
-        { key: 'initial_capital', label: 'Capital initial ($)', type: 'number', step: '100' }
+        { key: 'history_size', label: 'Taille historique (bougies)', type: 'number' }
     ];
 
     let formHtml = '<div class="space-y-3">';
@@ -1341,7 +1281,7 @@ async function editSettingsModal() {
 }
 
 async function saveSettingsEdit() {
-    const keys = ['timeframe', 'history_size', 'ema_fast', 'ema_slow', 'rsi_period', 'stop_loss', 'take_profit', 'initial_capital'];
+    const keys = ['history_size'];
     const data = {};
 
     keys.forEach(k => {
@@ -1349,10 +1289,10 @@ async function saveSettingsEdit() {
         if (el) data[k] = el.value;
     });
 
-    const emaFast = parseInt(data.ema_fast);
-    const emaSlow = parseInt(data.ema_slow);
-    if (emaFast >= emaSlow) {
-        toast('EMA Fast doit etre inferieur a EMA Slow', 'error');
+    // Validation basique
+    const hist = parseInt(data.history_size);
+    if (!hist || hist < 50 || hist > 100000) {
+        toast('Taille historique entre 50 et 100000', 'error');
         return;
     }
 
