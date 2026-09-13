@@ -68,25 +68,37 @@ def run_backtest(
     wins = 0
     losses = 0
 
+    # Colonnes converties en listes : la boucle devient ~100x plus
+    # rapide que l'acces iloc ligne a ligne (indispensable au-dela
+    # de quelques milliers de bougies)
+    times = df["time"].astype("int64").tolist()
+    closes = df["close"].astype(float).tolist()
+    highs = df["high"].astype(float).tolist()
+    lows = df["low"].astype(float).tolist()
+    emas_fast = df["ema_fast"].astype(float).tolist()
+    emas_slow = df["ema_slow"].astype(float).tolist()
+    emas_trend = df["ema_trend"].astype(float).tolist()
+    rsi_values = df["rsi"].astype(float).tolist()
+
     for i in range(1, len(df)):
 
-        prev_fast = df.iloc[i - 1]["ema_fast"]
-        prev_slow = df.iloc[i - 1]["ema_slow"]
+        prev_fast = emas_fast[i - 1]
+        prev_slow = emas_slow[i - 1]
 
-        curr_fast = df.iloc[i]["ema_fast"]
-        curr_slow = df.iloc[i]["ema_slow"]
+        curr_fast = emas_fast[i]
+        curr_slow = emas_slow[i]
 
-        price = float(df.iloc[i]["close"])
-        timestamp = int(df.iloc[i]["time"])
+        price = closes[i]
+        timestamp = times[i]
 
-        rsi_value = float(df.iloc[i]["rsi"])
-        trend_value = float(df.iloc[i]["ema_trend"])
+        rsi_value = rsi_values[i]
+        trend_value = emas_trend[i]
 
         stop_loss_triggered = False
         take_profit_triggered = False
 
-        high_price = float(df.iloc[i]["high"])
-        low_price = float(df.iloc[i]["low"])
+        high_price = highs[i]
+        low_price = lows[i]
 
         if position > 0:
 

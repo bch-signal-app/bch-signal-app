@@ -2,10 +2,12 @@ from flask import Flask, jsonify, make_response, render_template, request
 from flask_cors import CORS
 import pandas as pd
 import os
-from datetime import datetime
+from datetime import datetime, timezone
 
 from db import count_candles
 from db import get_last_candles
+from db import get_candles_since
+from db import get_first_timestamp
 from db import set_setting
 from db import get_setting
 from backtest import run_backtest
@@ -266,6 +268,26 @@ def rsi(series, period=RSI_PERIOD):
     return (
         100 - (100 / (1 + rs))
     ).fillna(50)
+
+
+def parse_since_date(value):
+    """'AAAA-MM-JJ' -> timestamp UTC (minuit), None si absent/invalide."""
+
+    if not value:
+        return None
+
+    try:
+        return int(
+            datetime.strptime(value, "%Y-%m-%d")
+            .replace(tzinfo=timezone.utc)
+            .timestamp()
+        )
+    except ValueError:
+        return None
+
+
+def iso_date(ts):
+    return datetime.fromtimestamp(ts, tz=timezone.utc).strftime("%Y-%m-%d")
 
 
 # =========================
@@ -806,10 +828,64 @@ def backtest_strategy(strategy_id):
 # compare backtests
 # =========================
 
+@app.route("/backtest/period")
+def backtest_period():
+
+    first_ts = get_first_timestamp(APP_SYMBOL)
+
+    if not first_ts:
+        return jsonify({"error": "no data"})
+
+    since_ts = parse_since_date(request.args.get("since"))
+
+    clamped = False
+    if since_ts is None or since_ts < first_ts:
+        since_ts = first_ts
+        clamped = True
+
+    count = db.execute(
+        "SELECT COUNT(*) FROM candles WHERE symbol = ? AND timestamp >= ?",
+        [APP_SYMBOL, since_ts]
+    ).fetchone()[0]
+
+    return jsonify({
+        "since": iso_date(since_ts),
+        "first_available": iso_date(first_ts),
+        "clamped": clamped,
+        "candles": count
+    })
+
+
 @app.route("/backtest/compare")
 def compare_backtests():
 
-    rows = get_last_candles(get_app_settings()["history_size"])
+    first_ts = get_first_timestamp(APP_SYMBOL)
+
+    since_ts = parse_since_date(request.args.get("since"))
+
+    # la date de debut ne peut pas preceder la premiere bougie disponible
+    if since_ts is not None and first_ts is not None and since_ts < first_ts:
+        since_ts = first_ts
+
+    if since_ts is not None:
+        rows = get_candles_since(APP_SYMBOL, since_ts)
+    elif first_ts is not None:
+        rows = get_candles_since(APP_SYMBOL, first_ts)
+    else:
+        rows = []
+
+    period = {
+        "since": iso_date(since_ts if since_ts is not None else (first_ts or 0)),
+        "first_available": iso_date(first_ts) if first_ts else None,
+        "candles": len(rows)
+    }
+
+    if len(rows) < 250:
+        return jsonify({
+            "error":
+                f"periode trop courte : {len(rows)} bougies (minimum 250)",
+            "period": period
+        })
 
     strategies = get_strategies()
 
@@ -863,7 +939,8 @@ def compare_backtests():
 
     return jsonify({
         "best_strategy": results[0] if results else None,
-        "strategies": results
+        "strategies": results,
+        "period": period
     })
 
 # =========================

@@ -1036,15 +1036,38 @@ function renderCompare() {
     <div><h1 class="font-display text-3xl font-bold tracking-tight">Comparatif</h1><p class="text-muted text-sm mt-1">Comparaison des strategies</p></div>
     <button onclick="runCompare()" class="btn btn-primary"><i class="fas fa-balance-scale"></i>Comparer</button>
   </div>
+  <div class="card mb-5">
+    <div class="flex items-end gap-4 flex-wrap">
+      <div>
+        <label class="text-xs text-muted block mb-1">Depuis</label>
+        <input type="date" id="cmp-since" onchange="updateComparePeriod()" class="bg-[var(--bg3)] text-[var(--fg)] border border-[var(--border)] rounded-lg px-3 py-2 text-sm mono" />
+      </div>
+      <div class="pb-2 text-sm text-muted">A ce jour &middot; <span id="cmp-candles" class="mono font-semibold text-[var(--fg)]">...</span></div>
+    </div>
+  </div>
   <div id="compare-content"><div class="card text-center py-12"><i class="fas fa-balance-scale text-4xl text-muted mb-3"></i><p class="text-muted">Cliquez sur Comparer</p></div></div>`;
 }
 
+async function updateComparePeriod() {
+  const el = document.getElementById('cmp-since');
+  const out = document.getElementById('cmp-candles');
+  if (!el || !out) return;
+  out.textContent = '...';
+  const p = await api('/backtest/period?since=' + (el.value || ''));
+  if (!p || p.error) { out.textContent = 'indisponible'; return; }
+  if (p.clamped) el.value = p.since;
+  out.textContent = `${p.candles} bougies depuis le ${p.since}`;
+}
+
 async function runCompare() {
-  document.getElementById('compare-content').innerHTML='<div class="card text-center py-10"><div class="spinner mx-auto mb-3"></div><p class="text-muted">Comparaison (30-90s)...</p></div>';
-  const result=await api('/backtest/compare');
-  if(!result||!result.strategies||result.strategies.length===0){
-    document.getElementById('compare-content').innerHTML='<div class="card text-center py-10"><i class="fas fa-exclamation-triangle text-3xl text-hold mb-3"></i><p class="text-muted">Aucun resultat</p></div>';return;
+  document.getElementById('compare-content').innerHTML='<div class="card text-center py-10"><div class="spinner mx-auto mb-3"></div><p class="text-muted">Comparaison en cours...</p></div>';
+  const sinceEl=document.getElementById('cmp-since');
+  const result=await api('/backtest/compare'+(sinceEl&&sinceEl.value?`?since=${sinceEl.value}`:''));
+  if(!result||result.error||!result.strategies||result.strategies.length===0){
+    const msg=(result&&result.error)?result.error:'Aucun resultat';
+    document.getElementById('compare-content').innerHTML='<div class="card text-center py-10"><i class="fas fa-exclamation-triangle text-3xl text-hold mb-3"></i><p class="text-muted">'+msg+'</p></div>';return;
   }
+  const period=result.period?`<span class="text-muted font-normal text-xs ml-2 mono">${result.period.candles} bougies &middot; depuis le ${result.period.since}</span>`:'';
   const best=result.best_strategy;
   const maxPct=Math.max(...result.strategies.map(s=>Math.abs(s.profit_pct)),1);
   let html='';
@@ -1059,7 +1082,7 @@ async function runCompare() {
         <div><div class="stat-label">Trades</div><div class="mono font-bold text-lg">${best.trades_count}(${best.wins}W/${best.losses}L)</div></div>
       </div></div>`;
   }
-  html+=`<div class="card mb-5"><h3 class="font-semibold text-sm mb-4"><i class="fas fa-table text-accent mr-2"></i>Classement</h3>
+  html+=`<div class="card mb-5"><h3 class="font-semibold text-sm mb-4"><i class="fas fa-table text-accent mr-2"></i>Classement${period}</h3>
     <div class="overflow-x-auto"><table><thead><tr><th>#</th><th>Strategie</th><th>Profit</th><th>Capital</th><th>Trades</th><th>Win Rate</th></tr></thead><tbody>
     ${result.strategies.map((s,i)=>`<tr><td><span class="inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold" style="background:${i===0?'rgba(16,185,129,.2)':'var(--bg3)'};color:${i===0?'var(--accent)':'var(--muted)'}">${i+1}</span></td>
     <td class="font-semibold">${s.name}</td><td class="mono font-semibold" style="color:${s.profit_pct>=0?'var(--buy)':'var(--sell)'}">${fmtPct(s.profit_pct)}</td>
@@ -1157,7 +1180,16 @@ function renderDebug() {
   <div id="debug-content"><div class="card text-center py-12"><i class="fas fa-bug text-4xl text-muted mb-3"></i><p class="text-muted">Cliquez sur Tester</p></div></div>`;
 }
 
-async function initCompare(){}
+async function initCompare(){
+  const info=await api('/dbinfo');
+  if(!info||!info.min_timestamp)return;
+  const first=new Date(info.min_timestamp*1000).toISOString().slice(0,10);
+  const el=document.getElementById('cmp-since');
+  if(!el)return;
+  el.min=first;
+  el.value=first;
+  updateComparePeriod();
+}
 
 async function initDebug(){}
 

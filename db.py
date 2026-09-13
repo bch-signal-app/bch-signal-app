@@ -151,6 +151,34 @@ def get_last_candles(limit=100):
 
 
 # =========================
+# Premiere bougie stockee
+# =========================
+def get_first_timestamp(symbol):
+    row = db.execute(
+        """
+        SELECT MIN(timestamp) FROM candles WHERE symbol = ?
+        """,
+        [symbol]
+    ).fetchone()
+    return row[0] if row and row[0] is not None else None
+
+
+# =========================
+# Bougies depuis une date
+# =========================
+def get_candles_since(symbol, since_ts):
+    return db.execute(
+        """
+        SELECT timestamp, symbol, open, high, low, close, volume
+        FROM candles
+        WHERE symbol = ? AND timestamp >= ?
+        ORDER BY timestamp
+        """,
+        [symbol, since_ts]
+    ).fetchall()
+
+
+# =========================
 # Settings
 # =========================
 def set_setting(key, value):
