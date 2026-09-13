@@ -784,12 +784,14 @@ async function initStrategies() {
                     ${!isActive ? `<button onclick="deleteStrategy(${d.id},'${d.name}')" class="btn btn-danger btn-sm"><i class="fas fa-trash"></i></button>` : ''}
                 </div>
             </div>
-            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 mt-4 pt-4 border-t border-[var(--border)]">
-                <div><div class="stat-label">EMA Fast</div><div class="mono font-semibold">${d.ema_fast}</div></div>
-                <div><div class="stat-label">EMA Slow</div><div class="mono font-semibold">${d.ema_slow}</div></div>
+            <div class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 gap-3 mt-4 pt-4 border-t border-[var(--border)]">
+                <div><div class="stat-label">Timeframe</div><div class="mono font-semibold">${d.timeframe||'1hour'}</div></div>
+                <div><div class="stat-label">EMA Fast/Slow</div><div class="mono font-semibold">${d.ema_fast}/${d.ema_slow}</div></div>
                 <div><div class="stat-label">EMA Trend</div><div class="mono font-semibold">${d.ema_trend}</div></div>
                 <div><div class="stat-label">RSI</div><div class="mono font-semibold">${d.rsi_period} / min ${d.rsi_min}</div></div>
-                <div><div class="stat-label">SL / TP</div><div class="mono font-semibold"><span class="text-sell">${d.stop_loss}%</span> / <span class="text-buy">${d.take_profit}%</span></div></div>
+                <div><div class="stat-label">Stops</div><div class="mono font-semibold">${d.sl_mode==='atr'?`<span class="text-sell">${d.sl_atr}xATR</span> / <span class="text-buy">${d.tp_atr}xATR</span>`:`<span class="text-sell">${d.stop_loss}%</span> / <span class="text-buy">${d.take_profit}%</span>`}</div></div>
+                <div><div class="stat-label">Risque/trade</div><div class="mono font-semibold">${d.risk_pct>0?d.risk_pct+'%':'All-in'}</div></div>
+                <div><div class="stat-label">Regime</div><div class="mono font-semibold">${d.regime_ema>0?('EMA '+d.regime_ema):'-'}</div></div>
             </div>
             <div class="mt-2 text-xs text-muted">Capital initial: <span class="mono">$${d.initial_capital}</span></div>
         </div>`;
@@ -1054,7 +1056,7 @@ async function initBacktest(){const s=await api('/strategies');const sel=documen
 async function runBacktest() {
   const sel=document.getElementById('bt-sel');
   const endpoint=sel&&sel.value?'/backtest/'+sel.value:'/backtest';
-  document.getElementById('backtest-content').innerHTML='<div class="card text-center py-10"><div class="spinner mx-auto mb-3"></div><p class="text-muted">Backtest en cours (30-90s)...</p></div>';
+  document.getElementById('backtest-content').innerHTML='<div class="card text-center py-10"><div class="spinner mx-auto mb-3"></div><p class="text-muted">Backtest en cours...</p></div>';
   const result=await api(endpoint);
   if(!result||result.error){
     document.getElementById('backtest-content').innerHTML=`<div class="card text-center py-10"><i class="fas fa-exclamation-triangle text-3xl text-hold mb-3"></i><p class="text-muted">Erreur: ${result?result.error:'Serveur indisponible'}</p><button onclick="runBacktest()" class="btn btn-primary btn-sm mt-3"><i class="fas fa-redo"></i>Reessayer</button></div>`;
@@ -1066,16 +1068,17 @@ async function runBacktest() {
 function renderBacktestResult(r) {
   const pos=r.profit>=0;
   document.getElementById('backtest-content').innerHTML=`
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-5">
+    <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-5">
       <div class="card text-center"><div class="stat-label">Capital initial</div><div class="mono font-bold text-xl">$${fmt(r.capital_start)}</div></div>
       <div class="card text-center"><div class="stat-label">Capital final</div><div class="mono font-bold text-xl" style="color:${pos?'var(--buy)':'var(--sell)'}">$${fmt(r.capital_end)}</div></div>
       <div class="card text-center"><div class="stat-label">Profit</div><div class="mono font-bold text-xl" style="color:${pos?'var(--buy)':'var(--sell)'}">${fmtPct(r.profit_pct)}</div><div class="mono text-sm" style="color:${pos?'var(--buy)':'var(--sell)'}">$${fmt(r.profit)}</div></div>
       <div class="card text-center"><div class="stat-label">Win Rate</div><div class="mono font-bold text-xl">${fmt(r.win_rate,1)}%</div><div class="text-xs text-muted">${r.wins}W/${r.losses}L</div></div>
+      <div class="card text-center"><div class="stat-label">Max DD</div><div class="mono font-bold text-xl text-sell">${r.max_dd_pct!=null?fmt(r.max_dd_pct,1)+'%':'-'}</div></div>
     </div>
     <div class="card mb-5"><div class="flex items-center justify-between mb-2"><span class="text-sm font-medium">Performance</span><span class="mono text-sm" style="color:${pos?'var(--buy)':'var(--sell)'}">${fmtPct(r.profit_pct)}</span></div>
       <div class="progress-bar"><div class="progress-fill" style="width:${Math.min(Math.max(r.profit_pct+10,0),100)}%;background:${pos?'var(--buy)':'var(--sell)'}"></div></div>
     </div>
-    ${r.strategy_name?`<div class="mb-4 text-sm text-muted">Strategie: <span class="text-accent font-semibold">${r.strategy_name}</span> (ID:${r.strategy_id})</div>`:''}
+    ${r.strategy_name?`<div class="mb-4 text-sm text-muted">Strategie: <span class="text-accent font-semibold">${r.strategy_name}</span> (ID:${r.strategy_id})${r.timeframe?` &middot; <span class="mono">${r.timeframe}</span>`:''}</div>`:''}
     <div class="card"><h3 class="font-semibold text-sm mb-4 flex items-center gap-2"><i class="fas fa-list text-accent"></i>Trades <span class="badge badge-hold text-[10px]">${r.trades_count}</span></h3>
     ${r.trades&&r.trades.length>0?`<div class="overflow-x-auto"><table><thead><tr><th>#</th><th>Entree</th><th>Prix</th><th>Sortie</th><th>Prix</th><th>Raison</th><th>Capital</th><th>P&L</th></tr></thead>
     <tbody>${r.trades.map(t=>{const w=t.profit>=0;return`<tr><td class="mono text-muted">${t.trade}</td><td class="mono text-xs">${fmtTime(t.buy_time)}</td><td class="mono">${fmt(t.buy_price,4)}</td><td class="mono text-xs">${fmtTime(t.sell_time)}</td><td class="mono">${fmt(t.sell_price,4)}</td>
