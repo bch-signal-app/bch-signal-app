@@ -1,17 +1,9 @@
 #!/bin/sh
-# Incremente le numero de build (build.txt) a chaque commit.
-# Format "AAAA-MM-JJ N" : N repart a 1 chaque nouveau jour, max 9999.
-# Installe via : git config core.hooksPath hooks
+# Ecrit dans build.txt le numero total de commits du projet
+# (commit en cours inclus). Installe via : git config core.hooksPath hooks
 cd "$(git rev-parse --show-toplevel)" || exit 0
-FILE="build.txt"
-TODAY=$(date +%Y-%m-%d)
-CUR=$(tr -d "" < "$FILE" 2>/dev/null)
-if [ "$(echo "$CUR" | cut -d" " -f1)" = "$TODAY" ]; then
-  N=$(($(echo "$CUR" | cut -d" " -f2) + 1))
-  [ "$N" -gt 9999 ] && N=1
-else
-  N=1
-fi
-printf "%s %d
-" "$TODAY" "$N" > "$FILE"
-git add "$FILE"
+N=$(git rev-list --count HEAD 2>/dev/null) || N=0
+N=$((N + 1))
+printf "%d
+" "$N" > build.txt
+git add build.txt
