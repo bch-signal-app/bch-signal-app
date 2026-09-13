@@ -553,12 +553,14 @@ function renderChart() {
 async function initChart() {
   const strats = await api('/strategies');
   const sel = document.getElementById('chart-strategy-select');
-  if (strats && sel) strats.forEach(s => { const o = document.createElement('option'); o.value=s.id; o.textContent=s.name; sel.appendChild(o); });
+  if (strats && sel) strats.forEach(s => { const o=document.createElement('option');o.value=s.id;o.textContent=s.name;sel.appendChild(o); });
+  const act = await api('/active-strategy');
+  if (act && !act.error && sel) sel.value = String(act.id);
 }
 
 async function loadChart() {
   const area = document.getElementById('chart-area');
-  area.innerHTML = '<div class="card text-center py-10"><div class="spinner mx-auto mb-3"></div><p class="text-muted">Chargement des bougies (peut prendre 30-60s)...</p></div>';
+  area.innerHTML = '<div class="card text-center py-10"><div class="spinner mx-auto mb-3"></div><p class="text-muted">Chargement des bougies...</p></div>';
 
   const history = await api('/history');
   if (!history || history.length === 0) {
@@ -566,7 +568,9 @@ async function loadChart() {
     return;
   }
 
+  const cfg = await api('/config');
   let emaFast=9,emaSlow=20,emaTrend=50,rsiPeriod=14;
+  if (cfg && !cfg.error) { emaFast=cfg.ema_fast;emaSlow=cfg.ema_slow;emaTrend=cfg.ema_trend;rsiPeriod=cfg.rsi_period; }
   const sel = document.getElementById('chart-strategy-select');
   if (sel && sel.value) {
     const s = await api('/strategy/'+sel.value);
@@ -800,7 +804,7 @@ async function initStrategies() {
     container.innerHTML = html;
 }
 
-async function setActiveStrategy(id){const r=await api('/active-strategy/'+id);if(r&&r.success){toast('Strategie activee','success');initStrategies()}else toast('Erreur activation','error')}
+async function setActiveStrategy(id){const r=await api('/active-strategy/'+id);if(r&&r.success){toast('Strategie activee - parametres synchronises','success');initStrategies();updateHeader()}else toast('Erreur activation','error')}
 async function cloneStrategy(id){const r=await api('/strategy/'+id+'/clone',{method:'POST'});if(r&&r.success){toast('Clonee (ID:'+r.new_strategy_id+')','success');initStrategies()}else toast('Erreur clonage','error')}
 function deleteStrategy(id,name){showModal('Supprimer',`<p class="text-sm">Supprimer <strong>${name}</strong> ?</p>`,`<button onclick="closeModal()" class="btn btn-secondary">Annuler</button><button onclick="confirmDelete(${id})" class="btn btn-danger"><i class="fas fa-trash"></i>Supprimer</button>`)}
 async function confirmDelete(id){closeModal();const r=await api('/strategy/'+id+'/delete');if(r&&r.success){toast('Supprimee','success');initStrategies()}else toast('Erreur','error')}

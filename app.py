@@ -169,6 +169,41 @@ def get_app_settings():
                 RSI_MIN
             ),
 
+        "sl_mode":
+            str(
+                get_setting("sl_mode", "percent")
+            ),
+
+        "atr_period":
+            _as_int(
+                get_setting("atr_period", 14),
+                14
+            ),
+
+        "sl_atr":
+            _as_float(
+                get_setting("sl_atr", 2.0),
+                2.0
+            ),
+
+        "tp_atr":
+            _as_float(
+                get_setting("tp_atr", 4.0),
+                4.0
+            ),
+
+        "risk_pct":
+            _as_float(
+                get_setting("risk_pct", 0.0),
+                0.0
+            ),
+
+        "regime_ema":
+            _as_int(
+                get_setting("regime_ema", 0),
+                0
+            ),
+
         "stop_loss":
             _as_float(
                 get_setting("stop_loss", STOP_LOSS),
@@ -197,25 +232,31 @@ def get_data():
 
     settings = get_app_settings()
 
-    tf_seconds = TIMEFRAME_SECONDS.get(
-        settings["timeframe"],
-        3600
-    )
+    tf = settings["timeframe"]
+
+    tf_seconds = TIMEFRAME_SECONDS.get(tf, 3600)
 
     update_candles(
         API_SYMBOL,
         APP_SYMBOL,
-        settings["timeframe"],
+        tf,
         tf_seconds,
-        target=settings["history_size"]
+        target=settings["history_size"],
+        table=("candles" if tf == "1hour" else "candles_multi")
     )
 
-    rows = db.execute(
-        "SELECT timestamp, open, high, low, close, volume "
-        "FROM candles WHERE symbol = ? "
-        "ORDER BY timestamp DESC LIMIT ?",
-        [APP_SYMBOL, settings["history_size"]]
-    ).fetchall()
+    if tf == "1hour":
+        sql = ("SELECT timestamp, open, high, low, close, volume "
+               "FROM candles WHERE symbol = ? "
+               "ORDER BY timestamp DESC LIMIT ?")
+        params = [APP_SYMBOL, settings["history_size"]]
+    else:
+        sql = ("SELECT timestamp, open, high, low, close, volume "
+               "FROM candles_multi WHERE symbol = ? AND timeframe = ? "
+               "ORDER BY timestamp DESC LIMIT ?")
+        params = [APP_SYMBOL, tf, settings["history_size"]]
+
+    rows = db.execute(sql, params).fetchall()
 
     if not rows:
         return pd.DataFrame()
@@ -535,7 +576,33 @@ def stats():
 @app.route("/history")
 def history():
 
-    rows = get_last_candles(get_app_settings()["history_size"])
+    settings = get_app_settings()
+
+    tf = settings["timeframe"]
+    tf_seconds = TIMEFRAME_SECONDS.get(tf, 3600)
+    table = "candles" if tf == "1hour" else "candles_multi"
+
+    update_candles(
+        API_SYMBOL,
+        APP_SYMBOL,
+        tf,
+        tf_seconds,
+        target=settings["history_size"],
+        table=table
+    )
+
+    if tf == "1hour":
+        sql = ("SELECT timestamp, open, high, low, close, volume "
+               "FROM candles WHERE symbol = ? "
+               "ORDER BY timestamp DESC LIMIT ?")
+        params = [APP_SYMBOL, settings["history_size"]]
+    else:
+        sql = ("SELECT timestamp, open, high, low, close, volume "
+               "FROM candles_multi WHERE symbol = ? AND timeframe = ? "
+               "ORDER BY timestamp DESC LIMIT ?")
+        params = [APP_SYMBOL, tf, settings["history_size"]]
+
+    rows = db.execute(sql, params).fetchall()
 
     data = []
 
@@ -543,12 +610,13 @@ def history():
 
         data.append({
             "timestamp": row[0],
-            "symbol": row[1],
-            "open": row[2],
-            "high": row[3],
-            "low": row[4],
-            "close": row[5],
-            "volume": row[6]
+            "symbol": APP_SYMBOL,
+            "open": row[1],
+            "high": row[2],
+            "low": row[3],
+            "close": row[4],
+            "volume": row[5],
+            "timeframe": tf
         })
 
     return jsonify(data)
@@ -619,7 +687,32 @@ def backtest():
 
     settings = get_app_settings()
 
-    rows = get_last_candles(settings["history_size"])
+    tf = settings["timeframe"]
+    tf_seconds = TIMEFRAME_SECONDS.get(tf, 3600)
+    table = "candles" if tf == "1hour" else "candles_multi"
+
+    update_candles(
+        API_SYMBOL,
+        APP_SYMBOL,
+        tf,
+        tf_seconds,
+        target=settings["history_size"],
+        table=table
+    )
+
+    if tf == "1hour":
+        sql = ("SELECT timestamp, symbol, open, high, low, close, volume "
+               "FROM candles WHERE symbol = ? "
+               "ORDER BY timestamp DESC LIMIT ?")
+        params = [APP_SYMBOL, settings["history_size"]]
+    else:
+        sql = ("SELECT timestamp, symbol, open, high, low, close, volume "
+               "FROM candles_multi "
+               "WHERE symbol = ? AND timeframe = ? "
+               "ORDER BY timestamp DESC LIMIT ?")
+        params = [APP_SYMBOL, tf, settings["history_size"]]
+
+    rows = db.execute(sql, params).fetchall()
 
     result = run_backtest(
     rows,
@@ -633,8 +726,16 @@ def backtest():
     settings["initial_capital"],
     APP_TRADING_FEE,
     settings["stop_loss"],
-    settings["take_profit"]
+    settings["take_profit"],
+    SL_MODE=settings["sl_mode"],
+    ATR_PERIOD=settings["atr_period"],
+    SL_ATR=settings["sl_atr"],
+    TP_ATR=settings["tp_atr"],
+    RISK_PCT=settings["risk_pct"],
+    REGIME_EMA=settings["regime_ema"]
     )
+
+    result["timeframe"] = tf
 
     return jsonify(result)
 
@@ -721,9 +822,34 @@ def set_active_strategy(strategy_id):
         strategy_id
     )
 
+    # Synchronise les parametres de la strategie dans la config
+    # globale : /signal, /config, /settings, /history et /backtest
+    # reflechent desormais la strategie active
+    synced = {
+        "timeframe": row[10],
+        "ema_fast": row[2],
+        "ema_slow": row[3],
+        "ema_trend": row[4],
+        "rsi_period": row[5],
+        "rsi_min": row[6],
+        "stop_loss": row[7],
+        "take_profit": row[8],
+        "initial_capital": row[9],
+        "sl_mode": row[11],
+        "atr_period": row[12],
+        "sl_atr": row[13],
+        "tp_atr": row[14],
+        "risk_pct": row[15],
+        "regime_ema": row[16]
+    }
+
+    for key, value in synced.items():
+        set_setting(key, value)
+
     return jsonify({
         "success": True,
-        "active_strategy_id": strategy_id
+        "active_strategy_id": strategy_id,
+        "synced": synced
     })
 
 # =========================
