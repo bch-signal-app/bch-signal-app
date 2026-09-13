@@ -471,7 +471,7 @@ async function initDashboard() {
     if (act && !act.error) {
         fillSlot('dash-strategy-name', `<span class="stat-value text-xl mono">${act.name}</span>`);
         safeHTML('dash-strategy-params',
-            `EMA ${act.ema_fast}/${act.ema_slow}/${act.ema_trend} | RSI ${act.rsi_period} | SL ${act.stop_loss}% | TP ${act.take_profit}%`);
+            `EMA ${act.ema_fast}/${act.ema_slow}/${act.ema_trend} | ${act.timeframe||'1hour'} | RSI ${act.rsi_period} | ` + (act.sl_mode==='atr' ? `SL ${act.sl_atr}xATR | TP ${act.tp_atr}xATR` : `SL ${act.stop_loss}% | TP ${act.take_profit}%`) + (act.risk_pct>0 ? ` | Risque ${act.risk_pct}%` : ' | All-in'));
     } else {
         fillSlotError('dash-strategy-name', '/active-strategy');
         slotRetryFns['dash-strategy-name'] = () => initDashboard();
@@ -842,12 +842,53 @@ function editStrategyModal(id) {
                 </div>
                 <div class="grid grid-cols-2 gap-3">
                     <div>
+                        <label class="text-xs text-muted block mb-1">Timeframe</label>
+                        <select id="edit-timeframe" class="w-full bg-[var(--bg3)] text-[var(--fg)] border border-[var(--border)] rounded-lg px-3 py-2 text-sm mono">
+                            <option value="1hour" ${d.timeframe==='1hour'?'selected':''}>1 hour</option>
+                            <option value="4hour" ${d.timeframe==='4hour'?'selected':''}>4 hours</option>
+                            <option value="1day" ${d.timeframe==='1day'?'selected':''}>1 day</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="text-xs text-muted block mb-1">Mode Stop</label>
+                        <select id="edit-sl-mode" class="w-full bg-[var(--bg3)] text-[var(--fg)] border border-[var(--border)] rounded-lg px-3 py-2 text-sm mono">
+                            <option value="percent" ${d.sl_mode==='percent'?'selected':''}>Pourcentage</option>
+                            <option value="atr" ${d.sl_mode==='atr'?'selected':''}>ATR (volatilite)</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
                         <label class="text-xs text-muted block mb-1">Stop Loss (%)</label>
                         <input type="number" step="0.1" id="edit-stop-loss" value="${d.stop_loss}" class="w-full bg-[var(--bg3)] text-[var(--fg)] border border-[var(--border)] rounded-lg px-3 py-2 text-sm mono" />
                     </div>
                     <div>
                         <label class="text-xs text-muted block mb-1">Take Profit (%)</label>
                         <input type="number" step="0.1" id="edit-take-profit" value="${d.take_profit}" class="w-full bg-[var(--bg3)] text-[var(--fg)] border border-[var(--border)] rounded-lg px-3 py-2 text-sm mono" />
+                    </div>
+                </div>
+                <div class="grid grid-cols-3 gap-3">
+                    <div>
+                        <label class="text-xs text-muted block mb-1">Stop (x ATR)</label>
+                        <input type="number" step="0.1" id="edit-sl-atr" value="${d.sl_atr}" class="w-full bg-[var(--bg3)] text-[var(--fg)] border border-[var(--border)] rounded-lg px-3 py-2 text-sm mono" />
+                    </div>
+                    <div>
+                        <label class="text-xs text-muted block mb-1">Target (x ATR)</label>
+                        <input type="number" step="0.1" id="edit-tp-atr" value="${d.tp_atr}" class="w-full bg-[var(--bg3)] text-[var(--fg)] border border-[var(--border)] rounded-lg px-3 py-2 text-sm mono" />
+                    </div>
+                    <div>
+                        <label class="text-xs text-muted block mb-1">ATR periode</label>
+                        <input type="number" id="edit-atr-period" value="${d.atr_period}" class="w-full bg-[var(--bg3)] text-[var(--fg)] border border-[var(--border)] rounded-lg px-3 py-2 text-sm mono" />
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="text-xs text-muted block mb-1">Risque / trade (%)</label>
+                        <input type="number" step="0.1" id="edit-risk-pct" value="${d.risk_pct}" class="w-full bg-[var(--bg3)] text-[var(--fg)] border border-[var(--border)] rounded-lg px-3 py-2 text-sm mono" />
+                    </div>
+                    <div>
+                        <label class="text-xs text-muted block mb-1">Regime EMA (0=off)</label>
+                        <input type="number" id="edit-regime-ema" value="${d.regime_ema}" class="w-full bg-[var(--bg3)] text-[var(--fg)] border border-[var(--border)] rounded-lg px-3 py-2 text-sm mono" />
                     </div>
                 </div>
                 <div>
@@ -873,7 +914,14 @@ async function saveStrategyEdit(id) {
         rsi_min: parseInt(document.getElementById('edit-rsi-min').value),
         stop_loss: parseFloat(document.getElementById('edit-stop-loss').value),
         take_profit: parseFloat(document.getElementById('edit-take-profit').value),
-        initial_capital: parseFloat(document.getElementById('edit-initial-capital').value)
+        initial_capital: parseFloat(document.getElementById('edit-initial-capital').value),
+        timeframe: document.getElementById('edit-timeframe').value,
+        sl_mode: document.getElementById('edit-sl-mode').value,
+        sl_atr: parseFloat(document.getElementById('edit-sl-atr').value),
+        tp_atr: parseFloat(document.getElementById('edit-tp-atr').value),
+        atr_period: parseInt(document.getElementById('edit-atr-period').value),
+        risk_pct: parseFloat(document.getElementById('edit-risk-pct').value),
+        regime_ema: parseInt(document.getElementById('edit-regime-ema').value)
     };
 
     // Validation basique
@@ -881,8 +929,16 @@ async function saveStrategyEdit(id) {
         toast('EMA Fast < EMA Slow < EMA Trend requis', 'error');
         return;
     }
-    if (data.stop_loss <= 0 || data.take_profit <= 0) {
-        toast('SL et TP doivent etre > 0', 'error');
+    if (data.sl_mode === 'percent' && (data.stop_loss <= 0 || data.take_profit <= 0)) {
+        toast('SL et TP doivent etre > 0 en mode pourcentage', 'error');
+        return;
+    }
+    if (data.sl_mode === 'atr' && (data.sl_atr <= 0 || data.tp_atr <= 0)) {
+        toast('SL et TP ATR doivent etre > 0 en mode ATR', 'error');
+        return;
+    }
+    if (data.risk_pct < 0 || data.risk_pct > 100) {
+        toast('Risque entre 0 (all-in) et 100', 'error');
         return;
     }
 
@@ -1039,6 +1095,14 @@ function renderCompare() {
   <div class="card mb-5">
     <div class="flex items-end gap-4 flex-wrap">
       <div>
+        <label class="text-xs text-muted block mb-1">Timeframe</label>
+        <select id="cmp-tf" onchange="updateComparePeriod()" class="bg-[var(--bg3)] text-[var(--fg)] border border-[var(--border)] rounded-lg px-3 py-2 text-sm mono">
+          <option value="1hour">1 hour</option>
+          <option value="4hour">4 hours</option>
+          <option value="1day">1 day</option>
+        </select>
+      </div>
+      <div>
         <label class="text-xs text-muted block mb-1">Depuis</label>
         <input type="date" id="cmp-since" onchange="updateComparePeriod()" class="bg-[var(--bg3)] text-[var(--fg)] border border-[var(--border)] rounded-lg px-3 py-2 text-sm mono" />
       </div>
@@ -1050,19 +1114,24 @@ function renderCompare() {
 
 async function updateComparePeriod() {
   const el = document.getElementById('cmp-since');
+  const tf = document.getElementById('cmp-tf');
   const out = document.getElementById('cmp-candles');
   if (!el || !out) return;
   out.textContent = '...';
-  const p = await api('/backtest/period?since=' + (el.value || ''));
+  const p = await api('/backtest/period?tf=' + (tf ? tf.value : '1hour') + '&since=' + (el.value || ''));
   if (!p || p.error) { out.textContent = 'indisponible'; return; }
   if (p.clamped) el.value = p.since;
-  out.textContent = `${p.candles} bougies depuis le ${p.since}`;
+  out.textContent = `${p.candles} bougies ${p.timeframe} depuis le ${p.since}`;
 }
 
 async function runCompare() {
   document.getElementById('compare-content').innerHTML='<div class="card text-center py-10"><div class="spinner mx-auto mb-3"></div><p class="text-muted">Comparaison en cours...</p></div>';
   const sinceEl=document.getElementById('cmp-since');
-  const result=await api('/backtest/compare'+(sinceEl&&sinceEl.value?`?since=${sinceEl.value}`:''));
+  const tfEl=document.getElementById('cmp-tf');
+  const params=[];
+  if(tfEl&&tfEl.value)params.push('tf='+tfEl.value);
+  if(sinceEl&&sinceEl.value)params.push('since='+sinceEl.value);
+  const result=await api('/backtest/compare'+(params.length?'?'+params.join('&'):''));
   if(!result||result.error||!result.strategies||result.strategies.length===0){
     const msg=(result&&result.error)?result.error:'Aucun resultat';
     document.getElementById('compare-content').innerHTML='<div class="card text-center py-10"><i class="fas fa-exclamation-triangle text-3xl text-hold mb-3"></i><p class="text-muted">'+msg+'</p></div>';return;
@@ -1083,10 +1152,10 @@ async function runCompare() {
       </div></div>`;
   }
   html+=`<div class="card mb-5"><h3 class="font-semibold text-sm mb-4"><i class="fas fa-table text-accent mr-2"></i>Classement${period}</h3>
-    <div class="overflow-x-auto"><table><thead><tr><th>#</th><th>Strategie</th><th>Profit</th><th>Capital</th><th>Trades</th><th>Win Rate</th></tr></thead><tbody>
+    <div class="overflow-x-auto"><table><thead><tr><th>#</th><th>Strategie</th><th>Profit</th><th>Capital</th><th>Trades</th><th>Win Rate</th><th>Max DD</th></tr></thead><tbody>
     ${result.strategies.map((s,i)=>`<tr><td><span class="inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold" style="background:${i===0?'rgba(16,185,129,.2)':'var(--bg3)'};color:${i===0?'var(--accent)':'var(--muted)'}">${i+1}</span></td>
     <td class="font-semibold">${s.name}</td><td class="mono font-semibold" style="color:${s.profit_pct>=0?'var(--buy)':'var(--sell)'}">${fmtPct(s.profit_pct)}</td>
-    <td class="mono">$${fmt(s.capital_end)}</td><td class="mono">${s.trades_count}</td><td class="mono">${fmt(s.win_rate,1)}%</td></tr>`).join('')}
+    <td class="mono">$${fmt(s.capital_end)}</td><td class="mono">${s.trades_count}</td><td class="mono">${fmt(s.win_rate,1)}%</td><td class="mono">${s.max_dd_pct!=null?fmt(s.max_dd_pct,1)+'%':'-'}</td></tr>`).join('')}
     </tbody></table></div></div>`;
   html+=`<div class="card"><h3 class="font-semibold text-sm mb-4"><i class="fas fa-chart-bar text-accent mr-2"></i>Visualisation</h3><div class="space-y-3">
     ${result.strategies.map(s=>{const w=Math.max(((s.profit_pct+maxPct)/(2*maxPct))*100,2);return`<div><div class="flex items-center justify-between mb-1"><span class="text-sm font-medium">${s.name}</span><span class="mono text-sm" style="color:${s.profit_pct>=0?'var(--buy)':'var(--sell)'}">${fmtPct(s.profit_pct)}</span></div>

@@ -37,48 +37,55 @@ def fetch_chunk(symbol_api, timeframe, start_at, end_at):
     return None
 
 
-def get_last_timestamp(symbol):
+def get_last_timestamp(symbol, table="candles", timeframe=None):
 
-    row = db.execute(
-        "SELECT MAX(timestamp) FROM candles WHERE symbol = ?",
-        [symbol]
-    ).fetchone()
+    if table == "candles_multi":
+        sql = ("SELECT MAX(timestamp) FROM candles_multi "
+               "WHERE symbol = ? AND timeframe = ?")
+        params = [symbol, timeframe]
+    else:
+        sql = "SELECT MAX(timestamp) FROM candles WHERE symbol = ?"
+        params = [symbol]
+
+    row = db.execute(sql, params).fetchone()
 
     return row[0] if row and row[0] is not None else None
 
 
-def save_candles(symbol_db, kucoin_rows):
+def save_candles(symbol_db, kucoin_rows, table="candles", timeframe=None):
 
     # KuCoin : [time, open, close, high, low, volume, turnover]
-    values = [
-        (int(r[0]), symbol_db, float(r[1]), float(r[3]),
-         float(r[4]), float(r[2]), float(r[5]))
-        for r in kucoin_rows
-    ]
+    if table == "candles_multi":
+        values = [
+            (int(r[0]), symbol_db, timeframe, float(r[1]), float(r[3]),
+             float(r[4]), float(r[2]), float(r[5]))
+            for r in kucoin_rows
+        ]
+        sql = "INSERT OR REPLACE INTO candles_multi VALUES (?,?,?,?,?,?,?,?)"
+    else:
+        values = [
+            (int(r[0]), symbol_db, float(r[1]), float(r[3]),
+             float(r[4]), float(r[2]), float(r[5]))
+            for r in kucoin_rows
+        ]
+        sql = "INSERT OR REPLACE INTO candles VALUES (?,?,?,?,?,?,?)"
 
     if values:
-        db.executemany(
-            "INSERT OR REPLACE INTO candles VALUES (?, ?, ?, ?, ?, ?, ?)",
-            values
-        )
+        db.executemany(sql, values)
         db.commit()
 
     return len(values)
 
 
 def update_candles(symbol_api, symbol_db, timeframe, tf_seconds,
-                   target=1000, chunk_hours=1500):
-    """Complete la base avec les bougies manquantes de KuCoin.
-
-    - base vide        : telecharge les `target` dernieres bougies
-    - base remplie     : telecharge uniquement ce qui manque depuis
-                         la derniere bougie stockee (1 requete si
-                         l'ecart est petit)
-    Renvoie (bougies inserees/remplacees, requetes envoyees).
+                   target=1000, chunk_hours=1500, table="candles"):
+    """Complete une table de bougies avec ce qui manque depuis la
+    derniere stockee (1 requete si l'ecart est petit, pagination
+    automatique sinon). Renvoie (bougies ecrites, requetes envoyees).
     """
 
     now = int(time.time())
-    last = get_last_timestamp(symbol_db)
+    last = get_last_timestamp(symbol_db, table, timeframe)
 
     if last is None:
         start_at = now - target * tf_seconds
@@ -112,7 +119,8 @@ def update_candles(symbol_api, symbol_db, timeframe, tf_seconds,
         time.sleep(0.2)
 
     inserted = save_candles(
-        symbol_db, [collected[ts] for ts in sorted(collected)]
+        symbol_db, [collected[ts] for ts in sorted(collected)],
+        table, timeframe
     )
 
     return inserted, n_req

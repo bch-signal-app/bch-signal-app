@@ -6,7 +6,7 @@ from datetime import datetime, timezone
 
 from db import count_candles
 from db import get_last_candles
-from db import get_candles_since
+from db import get_candles_tf
 from db import get_first_timestamp
 from db import set_setting
 from db import get_setting
@@ -600,7 +600,15 @@ def strategy(strategy_id):
         "stop_loss": row[7],
         "take_profit": row[8],
 
-        "initial_capital": row[9]
+        "initial_capital": row[9],
+
+        "timeframe": row[10],
+        "sl_mode": row[11],
+        "atr_period": row[12],
+        "sl_atr": row[13],
+        "tp_atr": row[14],
+        "risk_pct": row[15],
+        "regime_ema": row[16]
     })
 
 # =========================
@@ -685,7 +693,14 @@ def active_strategy():
         "rsi_min": row[6],
         "stop_loss": row[7],
         "take_profit": row[8],
-        "initial_capital": row[9]
+        "initial_capital": row[9],
+        "timeframe": row[10],
+        "sl_mode": row[11],
+        "atr_period": row[12],
+        "sl_atr": row[13],
+        "tp_atr": row[14],
+        "risk_pct": row[15],
+        "regime_ema": row[16]
     })
 
 # =========================
@@ -776,7 +791,14 @@ def update_strategy_route(strategy_id):
         data.get("rsi_min", row[6]),
         data.get("stop_loss", row[7]),
         data.get("take_profit", row[8]),
-        data.get("initial_capital", row[9])
+        data.get("initial_capital", row[9]),
+        data.get("timeframe", row[10]),
+        data.get("sl_mode", row[11]),
+        data.get("atr_period", row[12]),
+        data.get("sl_atr", row[13]),
+        data.get("tp_atr", row[14]),
+        data.get("risk_pct", row[15]),
+        data.get("regime_ema", row[16])
     )
 
     return jsonify({
@@ -797,7 +819,23 @@ def backtest_strategy(strategy_id):
             "error": "strategy not found"
         })
 
-    rows = get_last_candles(get_app_settings()["history_size"])
+    settings = get_app_settings()
+
+    timeframe = row[10] or "1hour"
+    tf_seconds = TIMEFRAME_SECONDS.get(timeframe, 3600)
+
+    # mise a jour incrementielle du timeframe de la strategie
+    update_candles(
+        API_SYMBOL,
+        APP_SYMBOL,
+        timeframe,
+        tf_seconds,
+        target=settings["history_size"],
+        table=("candles" if timeframe == "1hour" else "candles_multi")
+    )
+
+    all_rows = get_candles_tf(APP_SYMBOL, timeframe)
+    rows = all_rows[-settings["history_size"]:]
 
     result = run_backtest(
         rows,
@@ -816,11 +854,19 @@ def backtest_strategy(strategy_id):
         APP_TRADING_FEE,
 
         row[7],  # STOP_LOSS
-        row[8]   # TAKE_PROFIT
+        row[8],  # TAKE_PROFIT
+
+        SL_MODE=row[11],     # sl_mode
+        ATR_PERIOD=row[12],  # atr_period
+        SL_ATR=row[13],      # sl_atr
+        TP_ATR=row[14],      # tp_atr
+        RISK_PCT=row[15],    # risk_pct
+        REGIME_EMA=row[16]   # regime_ema
     )
 
     result["strategy_id"] = strategy_id
     result["strategy_name"] = row[1]
+    result["timeframe"] = timeframe
 
     return jsonify(result)
 
@@ -831,7 +877,11 @@ def backtest_strategy(strategy_id):
 @app.route("/backtest/period")
 def backtest_period():
 
-    first_ts = get_first_timestamp(APP_SYMBOL)
+    tf = request.args.get("tf", "1hour")
+    if tf not in TIMEFRAME_SECONDS:
+        tf = "1hour"
+
+    first_ts = get_first_timestamp(APP_SYMBOL, tf)
 
     if not first_ts:
         return jsonify({"error": "no data"})
@@ -843,12 +893,19 @@ def backtest_period():
         since_ts = first_ts
         clamped = True
 
-    count = db.execute(
-        "SELECT COUNT(*) FROM candles WHERE symbol = ? AND timestamp >= ?",
-        [APP_SYMBOL, since_ts]
-    ).fetchone()[0]
+    table = "candles" if tf == "1hour" else "candles_multi"
+    if tf == "1hour":
+        sql = ("SELECT COUNT(*) FROM candles "
+               "WHERE symbol = ? AND timestamp >= ?")
+        params = [APP_SYMBOL, since_ts]
+    else:
+        sql = ("SELECT COUNT(*) FROM candles_multi "
+               "WHERE symbol = ? AND timestamp >= ? AND timeframe = ?")
+        params = [APP_SYMBOL, since_ts, tf]
+    count = db.execute(sql, params).fetchone()[0]
 
     return jsonify({
+        "timeframe": tf,
         "since": iso_date(since_ts),
         "first_available": iso_date(first_ts),
         "clamped": clamped,
@@ -859,7 +916,26 @@ def backtest_period():
 @app.route("/backtest/compare")
 def compare_backtests():
 
-    first_ts = get_first_timestamp(APP_SYMBOL)
+    tf = request.args.get("tf", "1hour")
+    if tf not in TIMEFRAME_SECONDS:
+        tf = "1hour"
+    tf_seconds = TIMEFRAME_SECONDS[tf]
+
+    table = "candles" if tf == "1hour" else "candles_multi"
+
+    settings = get_app_settings()
+
+    # mise a jour incrementielle des bougies du timeframe demande
+    update_candles(
+        API_SYMBOL,
+        APP_SYMBOL,
+        tf,
+        tf_seconds,
+        target=settings["history_size"],
+        table=table
+    )
+
+    first_ts = get_first_timestamp(APP_SYMBOL, tf)
 
     since_ts = parse_since_date(request.args.get("since"))
 
@@ -868,13 +944,14 @@ def compare_backtests():
         since_ts = first_ts
 
     if since_ts is not None:
-        rows = get_candles_since(APP_SYMBOL, since_ts)
+        rows = get_candles_tf(APP_SYMBOL, tf, since_ts)
     elif first_ts is not None:
-        rows = get_candles_since(APP_SYMBOL, first_ts)
+        rows = get_candles_tf(APP_SYMBOL, tf, first_ts)
     else:
         rows = []
 
     period = {
+        "timeframe": tf,
         "since": iso_date(since_ts if since_ts is not None else (first_ts or 0)),
         "first_available": iso_date(first_ts) if first_ts else None,
         "candles": len(rows)
@@ -898,19 +975,26 @@ def compare_backtests():
             ema,
             rsi,
 
-            row[2],
-            row[3],
-            row[4],
+            row[2],  # EMA_FAST
+            row[3],  # EMA_SLOW
+            row[4],  # EMA_TREND
 
-            row[5],
+            row[5],  # RSI_PERIOD
             row[6],  # RSI_MIN
 
-            row[9],
+            row[9],  # INITIAL_CAPITAL
 
             APP_TRADING_FEE,
 
-            row[7],
-            row[8]
+            row[7],  # STOP_LOSS
+            row[8],  # TAKE_PROFIT
+
+            SL_MODE=row[11],     # sl_mode
+            ATR_PERIOD=row[12],  # atr_period
+            SL_ATR=row[13],      # sl_atr
+            TP_ATR=row[14],      # tp_atr
+            RISK_PCT=row[15],    # risk_pct
+            REGIME_EMA=row[16]   # regime_ema
         )
 
         results.append({
@@ -928,7 +1012,8 @@ def compare_backtests():
             "wins": result["wins"],
             "losses": result["losses"],
 
-            "win_rate": result["win_rate"]
+            "win_rate": result["win_rate"],
+            "max_dd_pct": result.get("max_dd_pct")
         })
 
     results = sorted(

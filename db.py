@@ -48,6 +48,48 @@ CREATE TABLE IF NOT EXISTS strategies (
 )
 """)
 
+# =========================
+# Table candles_multi (4h, 1d, ...)
+# =========================
+db.execute("""
+CREATE TABLE IF NOT EXISTS candles_multi (
+    timestamp BIGINT,
+    symbol VARCHAR,
+    timeframe VARCHAR,
+    open DOUBLE,
+    high DOUBLE,
+    low DOUBLE,
+    close DOUBLE,
+    volume DOUBLE,
+    PRIMARY KEY(timestamp, symbol, timeframe)
+)
+""")
+
+# =========================
+# Migration strategies v2 :
+# timeframe, stops ATR, sizing a risque fixe, filtre de regime.
+# Valeurs par defaut = comportement historique (SL/TP en %, all-in,
+# pas de regime) : les strategies existantes ne changent pas.
+# =========================
+strategy_cols = {
+    row[1]
+    for row in db.execute("PRAGMA table_info(strategies)").fetchall()
+}
+
+for _col, _typ, _default in [
+    ("timeframe", "VARCHAR", "'1hour'"),
+    ("sl_mode", "VARCHAR", "'percent'"),
+    ("atr_period", "INTEGER", "14"),
+    ("sl_atr", "DOUBLE", "2.0"),
+    ("tp_atr", "DOUBLE", "4.0"),
+    ("risk_pct", "DOUBLE", "0"),
+    ("regime_ema", "INTEGER", "0")
+]:
+    if _col not in strategy_cols:
+        db.execute(
+            f"ALTER TABLE strategies ADD COLUMN {_col} {_typ} DEFAULT {_default}"
+        )
+
 db.commit()
 
 
@@ -72,7 +114,10 @@ def save_candle(timestamp, symbol, open_price, high_price, low_price, close_pric
     )
 
 
-def create_strategy(name, ema_fast, ema_slow, ema_trend, rsi_period, rsi_min, stop_loss, take_profit, initial_capital):
+def create_strategy(name, ema_fast, ema_slow, ema_trend, rsi_period, rsi_min,
+                    stop_loss, take_profit, initial_capital,
+                    timeframe="1hour", sl_mode="percent", atr_period=14,
+                    sl_atr=2.0, tp_atr=4.0, risk_pct=0.0, regime_ema=0):
     next_id = db.execute(
         """
         SELECT COALESCE(MAX(id), 0) + 1
@@ -83,10 +128,14 @@ def create_strategy(name, ema_fast, ema_slow, ema_trend, rsi_period, rsi_min, st
     db.execute(
         """
         INSERT INTO strategies
-        (id, name, ema_fast, ema_slow, ema_trend, rsi_period, rsi_min, stop_loss, take_profit, initial_capital)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        (id, name, ema_fast, ema_slow, ema_trend, rsi_period, rsi_min,
+         stop_loss, take_profit, initial_capital, timeframe, sl_mode,
+         atr_period, sl_atr, tp_atr, risk_pct, regime_ema)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """,
-        [next_id, name, ema_fast, ema_slow, ema_trend, rsi_period, rsi_min, stop_loss, take_profit, initial_capital]
+        [next_id, name, ema_fast, ema_slow, ema_trend, rsi_period, rsi_min,
+         stop_loss, take_profit, initial_capital, timeframe, sl_mode,
+         atr_period, sl_atr, tp_atr, risk_pct, regime_ema]
     )
 
     db.commit()
@@ -153,14 +202,35 @@ def get_last_candles(limit=100):
 # =========================
 # Premiere bougie stockee
 # =========================
-def get_first_timestamp(symbol):
-    row = db.execute(
-        """
-        SELECT MIN(timestamp) FROM candles WHERE symbol = ?
-        """,
-        [symbol]
-    ).fetchone()
+def get_first_timestamp(symbol, timeframe="1hour"):
+    if timeframe in (None, "1hour"):
+        sql = "SELECT MIN(timestamp) FROM candles WHERE symbol = ?"
+        params = [symbol]
+    else:
+        sql = ("SELECT MIN(timestamp) FROM candles_multi "
+               "WHERE symbol = ? AND timeframe = ?")
+        params = [symbol, timeframe]
+    row = db.execute(sql, params).fetchone()
     return row[0] if row and row[0] is not None else None
+
+
+# =========================
+# Bougies d'un timeframe depuis une date
+# =========================
+def get_candles_tf(symbol, timeframe="1hour", since_ts=None):
+    if timeframe in (None, "1hour"):
+        sql = ("SELECT timestamp, open, high, low, close, volume "
+               "FROM candles WHERE symbol = ?")
+        params = [symbol]
+    else:
+        sql = ("SELECT timestamp, open, high, low, close, volume "
+               "FROM candles_multi WHERE symbol = ? AND timeframe = ?")
+        params = [symbol, timeframe]
+    if since_ts is not None:
+        sql += " AND timestamp >= ?"
+        params.append(since_ts)
+    sql += " ORDER BY timestamp"
+    return db.execute(sql, params).fetchall()
 
 
 # =========================
@@ -217,10 +287,12 @@ def clone_strategy(strategy_id):
     db.execute(
         """
         INSERT INTO strategies
-        (id, name, ema_fast, ema_slow, ema_trend, rsi_period, rsi_min, stop_loss, take_profit, initial_capital)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        (id, name, ema_fast, ema_slow, ema_trend, rsi_period, rsi_min,
+         stop_loss, take_profit, initial_capital, timeframe, sl_mode,
+         atr_period, sl_atr, tp_atr, risk_pct, regime_ema)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """,
-        (next_id, row[1] + " Copy", row[2], row[3], row[4], row[5], row[6], row[7], row[8], row[9])
+        (next_id, row[1] + " Copy") + tuple(row[2:17])
     )
 
     db.commit()
@@ -238,19 +310,26 @@ def delete_strategy(strategy_id):
 
 
 def update_strategy(strategy_id, name, ema_fast, ema_slow, ema_trend,
-                    rsi_period, rsi_min, stop_loss, take_profit, initial_capital):
+                    rsi_period, rsi_min, stop_loss, take_profit, initial_capital,
+                    timeframe="1hour", sl_mode="percent", atr_period=14,
+                    sl_atr=2.0, tp_atr=4.0, risk_pct=0.0, regime_ema=0):
     db.execute(
         """
         UPDATE strategies
         SET name = ?, ema_fast = ?, ema_slow = ?, ema_trend = ?,
             rsi_period = ?, rsi_min = ?, stop_loss = ?, take_profit = ?,
-            initial_capital = ?
+            initial_capital = ?, timeframe = ?, sl_mode = ?,
+            atr_period = ?, sl_atr = ?, tp_atr = ?, risk_pct = ?,
+            regime_ema = ?
         WHERE id = ?
         """,
         [
             name, int(ema_fast), int(ema_slow), int(ema_trend),
             int(rsi_period), int(rsi_min),
             float(stop_loss), float(take_profit), float(initial_capital),
+            str(timeframe), str(sl_mode),
+            int(atr_period), float(sl_atr), float(tp_atr),
+            float(risk_pct), int(regime_ema),
             int(strategy_id)
         ]
     )
