@@ -4,7 +4,6 @@ import requests
 import pandas as pd
 import os
 import time
-import hashlib
 from datetime import datetime
 
 from db import save_candle
@@ -25,42 +24,26 @@ from db import update_strategy
 
 # =========================
 # Version affichee dans le dashboard
+# build.txt est incremente a chaque commit par hooks/pre-commit
+# (format "AAAA-MM-JJ N" : N repart a 1 chaque nouveau jour, max 9999)
+# Le fichier est dans le depot : local et Render affichent le meme numero
 # =========================
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 
-def compute_app_version():
+def read_build():
 
-    date_part = datetime.now().strftime("%Y-%m-%d")
-
-    # Sur Render, le SHA du commit deploye prouve que le
-    # deploiement correspond bien au code pousse
-    commit = os.environ.get("RENDER_GIT_COMMIT", "")
-
-    if commit:
-        return f"{date_part}.{commit[:7]}"
-
-    # En local : empreinte du code source,
-    # change des qu'un fichier change
-    source_hash = hashlib.md5()
-
-    for fname in [
-        "app.py",
-        "db.py",
-        "backtest.py",
-        os.path.join("templates", "dashboard.html")
-    ]:
-
-        fpath = os.path.join(BASE_DIR, fname)
-
-        if os.path.exists(fpath):
-            with open(fpath, "rb") as f:
-                source_hash.update(f.read())
-
-    return f"{date_part}.{source_hash.hexdigest()[:7]}"
+    try:
+        with open(os.path.join(BASE_DIR, "build.txt")) as f:
+            date_part, number = f.read().strip().split()
+        return date_part, int(number)
+    except (OSError, ValueError):
+        return datetime.now().strftime("%Y-%m-%d"), 0
 
 
-APP_VERSION = compute_app_version()
+BUILD_DATE, BUILD_NUMBER = read_build()
+
+APP_VERSION = f"{BUILD_DATE}.{BUILD_NUMBER}"
 
 APP_COMMIT = os.environ.get("RENDER_GIT_COMMIT", "")[:7]
 
