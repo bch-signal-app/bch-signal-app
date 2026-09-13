@@ -1133,8 +1133,10 @@ async function initSettings() {
         </div>`;
     }
 
+    const config = await api('/config');
+    if (!stillOnPage('settings')) return;
+
     if (settings) {
-        const general = { history_size: settings.history_size };
         html += `
         <div class="card mb-5">
             <div class="flex items-center justify-between mb-4">
@@ -1142,25 +1144,19 @@ async function initSettings() {
                 <button onclick="editSettingsModal()" class="btn btn-primary btn-sm"><i class="fas fa-edit"></i>Modifier</button>
             </div>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                ${Object.entries(general).map(([k,v]) => `
-                    <div class="flex items-center justify-between p-3 rounded-lg" style="background:var(--bg3)">
-                        <span class="text-sm text-muted">${k}</span>
-                        <span class="mono font-semibold text-sm">${v}</span>
-                    </div>
-                `).join('')}
+                <div class="flex items-center justify-between p-3 rounded-lg" style="background:var(--bg3)">
+                    <span class="text-sm text-muted">Taille historique (bougies)</span>
+                    <span class="mono font-semibold text-sm">${settings.history_size}</span>
+                </div>
+                <div class="flex items-center justify-between p-3 rounded-lg" style="background:var(--bg3)">
+                    <span class="text-sm text-muted">Paire</span>
+                    <span class="mono font-semibold text-sm">${config ? config.symbol : 'BCHUSDT'}</span>
+                </div>
             </div>
             <div class="text-xs text-muted mt-3">Les parametres propres a la strategie (timeframe, EMAs, stops, risque, regime) se modifient dans la page Strategies et s'appliquent a l'activation.</div>
         </div>`;
     } else {
         html += '<div class="card mb-5"><p class="text-muted">Impossible de charger les parametres</p></div>';
-    }
-
-    const config = await api('/config');
-    if (!stillOnPage('settings')) return;
-
-    if (config) {
-        html += `<div class="card mb-5"><h3 class="font-semibold text-sm mb-4"><i class="fas fa-cog text-accent mr-2"></i>Configuration (lecture seule)</h3>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">${Object.entries(config).map(([k,v])=>`<div class="flex items-center justify-between p-3 rounded-lg" style="background:var(--bg3)"><span class="text-sm text-muted">${k}</span><span class="mono font-semibold text-sm">${v}</span></div>`).join('')}</div></div>`;
     }
 
     const dbinfo = await api('/dbinfo');
