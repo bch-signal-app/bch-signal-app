@@ -191,12 +191,16 @@ def create_default_strategy():
 # =========================
 # Nombre de bougies
 # =========================
-def count_candles():
-    result = db.execute(
-        """
-        SELECT COUNT(*) FROM candles
-        """
-    ).fetchone()
+def count_candles(symbol=None):
+    if symbol:
+        result = db.execute(
+            "SELECT COUNT(*) FROM candles WHERE symbol = ?",
+            [symbol]
+        ).fetchone()
+    else:
+        result = db.execute(
+            "SELECT COUNT(*) FROM candles"
+        ).fetchone()
     return result[0]
 
 

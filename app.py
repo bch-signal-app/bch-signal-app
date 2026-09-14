@@ -2,6 +2,7 @@ from flask import Flask, jsonify, make_response, render_template, request
 from flask_cors import CORS
 import pandas as pd
 import os
+import requests
 from datetime import datetime, timezone
 
 from db import count_candles
@@ -54,16 +55,41 @@ APP_BRANCH = os.environ.get("RENDER_GIT_BRANCH", "")
 
 app = Flask(__name__)
 
-CORS(app)
+# CORS restreint : autorise uniquement le dashboard (même origine)
+# et les origines configurées via la variable d'environnement ALLOWED_ORIGINS
+_ALLOWED_ORIGINS = [
+    o.strip()
+    for o in os.environ.get("ALLOWED_ORIGINS", "").split(",")
+    if o.strip()
+]
+
+CORS(app, resources={r"/*": {"origins": _ALLOWED_ORIGINS or ["*"]}})
 
 # =========================
 # Configuration (valeurs par défaut)
 # La table `settings` en base prime sur ces constantes
 # (voir get_app_settings)
 # =========================
-APP_SYMBOL = "BCHUSDT"
+# Actifs supportes : symbole base de donnees -> paire KuCoin
+SUPPORTED_SYMBOLS = {
+    "BCHUSDT": "BCH-USDT",
+    "BTCUSDT": "BTC-USDT",
+    "ETHUSDT": "ETH-USDT"
+}
 
-API_SYMBOL = "BCH-USDT"
+DEFAULT_SYMBOL = "BCHUSDT"
+
+
+def get_active_symbol():
+
+    sym = get_setting("symbol", DEFAULT_SYMBOL)
+
+    return sym if sym in SUPPORTED_SYMBOLS else DEFAULT_SYMBOL
+
+
+def get_api_symbol(symbol):
+
+    return SUPPORTED_SYMBOLS.get(symbol, SUPPORTED_SYMBOLS[DEFAULT_SYMBOL])
 
 APP_TIMEFRAME = "1hour"
 
@@ -125,6 +151,8 @@ def _as_float(value, default):
 def get_app_settings():
 
     return {
+        "symbol": get_active_symbol(),
+
         "timeframe":
             str(
                 get_setting(
@@ -232,13 +260,16 @@ def get_data():
 
     settings = get_app_settings()
 
+    symbol = settings["symbol"]
+    api_symbol = get_api_symbol(symbol)
+
     tf = settings["timeframe"]
 
     tf_seconds = TIMEFRAME_SECONDS.get(tf, 3600)
 
     update_candles(
-        API_SYMBOL,
-        APP_SYMBOL,
+        api_symbol,
+        symbol,
         tf,
         tf_seconds,
         target=settings["history_size"],
@@ -249,12 +280,12 @@ def get_data():
         sql = ("SELECT timestamp, open, high, low, close, volume "
                "FROM candles WHERE symbol = ? "
                "ORDER BY timestamp DESC LIMIT ?")
-        params = [APP_SYMBOL, settings["history_size"]]
+        params = [symbol, settings["history_size"]]
     else:
         sql = ("SELECT timestamp, open, high, low, close, volume "
                "FROM candles_multi WHERE symbol = ? AND timeframe = ? "
                "ORDER BY timestamp DESC LIMIT ?")
-        params = [APP_SYMBOL, tf, settings["history_size"]]
+        params = [symbol, tf, settings["history_size"]]
 
     rows = db.execute(sql, params).fetchall()
 
@@ -339,7 +370,7 @@ def home():
 
     return jsonify({
         "status": "online",
-        "pair": APP_SYMBOL
+        "pair": get_active_symbol()
     })
 
 # =========================
@@ -375,7 +406,8 @@ def config():
     settings = get_app_settings()
 
     return jsonify({
-        "symbol": APP_SYMBOL,
+        "symbol": settings["symbol"],
+        "supported_symbols": list(SUPPORTED_SYMBOLS.keys()),
         "timeframe": settings["timeframe"],
         "history_size": settings["history_size"],
         "ema_fast": settings["ema_fast"],
@@ -388,11 +420,22 @@ def config():
 
 # =========================
 # Debug KuCoin
+# Uniquement accessible en mode debug (FLASK_DEBUG=1) ou si
+# DEBUG_ENABLED=true est défini dans l'environnement.
 # =========================
 @app.route("/debug")
 def debug():
 
-    url = "https://api.kucoin.com/api/v1/market/candles?type=1hour&symbol=BCH-USDT"
+    if not (
+        os.environ.get("FLASK_DEBUG") == "1"
+        or os.environ.get("DEBUG_ENABLED", "").lower() == "true"
+    ):
+        return jsonify({
+            "error": "debug mode disabled"
+        }), 403
+
+    url = ("https://api.kucoin.com/api/v1/market/candles"
+           f"?type=1hour&symbol={get_api_symbol(get_active_symbol())}")
 
     try:
 
@@ -427,7 +470,7 @@ def price():
     last = df.iloc[-1]
 
     return jsonify({
-        "pair": APP_SYMBOL,
+        "pair": get_active_symbol(),
         "price": round(float(last["close"]), 4),
         "time": int(last["time"])
     })
@@ -452,15 +495,19 @@ def refresh():
 @app.route("/dbinfo")
 def dbinfo():
 
+    symbol = get_active_symbol()
+
     result = db.execute("""
         SELECT
             MIN(timestamp),
             MAX(timestamp),
             COUNT(*)
         FROM candles
-    """).fetchone()
+        WHERE symbol = ?
+    """, [symbol]).fetchone()
 
     return {
+        "symbol": symbol,
         "min_timestamp": result[0],
         "max_timestamp": result[1],
         "count": result[2]
@@ -524,7 +571,7 @@ def signal():
 
         return jsonify({
 
-            "pair": APP_SYMBOL,
+            "pair": settings["symbol"],
 
             "signal": signal_value,
 
@@ -572,7 +619,7 @@ def signal():
 @app.route("/stats")
 def stats():
     try:
-        count = count_candles()
+        count = count_candles(get_active_symbol())
         return jsonify({
             "stored_candles": count
         })
@@ -590,13 +637,16 @@ def history():
 
     settings = get_app_settings()
 
+    symbol = settings["symbol"]
+    api_symbol = get_api_symbol(symbol)
+
     tf = settings["timeframe"]
     tf_seconds = TIMEFRAME_SECONDS.get(tf, 3600)
     table = "candles" if tf == "1hour" else "candles_multi"
 
     update_candles(
-        API_SYMBOL,
-        APP_SYMBOL,
+        api_symbol,
+        symbol,
         tf,
         tf_seconds,
         target=settings["history_size"],
@@ -607,12 +657,12 @@ def history():
         sql = ("SELECT timestamp, open, high, low, close, volume "
                "FROM candles WHERE symbol = ? "
                "ORDER BY timestamp DESC LIMIT ?")
-        params = [APP_SYMBOL, settings["history_size"]]
+        params = [symbol, settings["history_size"]]
     else:
         sql = ("SELECT timestamp, open, high, low, close, volume "
                "FROM candles_multi WHERE symbol = ? AND timeframe = ? "
                "ORDER BY timestamp DESC LIMIT ?")
-        params = [APP_SYMBOL, tf, settings["history_size"]]
+        params = [symbol, tf, settings["history_size"]]
 
     rows = db.execute(sql, params).fetchall()
 
@@ -622,7 +672,7 @@ def history():
 
         data.append({
             "timestamp": row[0],
-            "symbol": APP_SYMBOL,
+            "symbol": symbol,
             "open": row[1],
             "high": row[2],
             "low": row[3],
@@ -699,13 +749,16 @@ def backtest():
 
     settings = get_app_settings()
 
+    symbol = settings["symbol"]
+    api_symbol = get_api_symbol(symbol)
+
     tf = settings["timeframe"]
     tf_seconds = TIMEFRAME_SECONDS.get(tf, 3600)
     table = "candles" if tf == "1hour" else "candles_multi"
 
     update_candles(
-        API_SYMBOL,
-        APP_SYMBOL,
+        api_symbol,
+        symbol,
         tf,
         tf_seconds,
         target=settings["history_size"],
@@ -716,13 +769,13 @@ def backtest():
         sql = ("SELECT timestamp, symbol, open, high, low, close, volume "
                "FROM candles WHERE symbol = ? "
                "ORDER BY timestamp DESC LIMIT ?")
-        params = [APP_SYMBOL, settings["history_size"]]
+        params = [symbol, settings["history_size"]]
     else:
         sql = ("SELECT timestamp, symbol, open, high, low, close, volume "
                "FROM candles_multi "
                "WHERE symbol = ? AND timeframe = ? "
                "ORDER BY timestamp DESC LIMIT ?")
-        params = [APP_SYMBOL, tf, settings["history_size"]]
+        params = [symbol, tf, settings["history_size"]]
 
     rows = db.execute(sql, params).fetchall()
 
@@ -748,6 +801,7 @@ def backtest():
     )
 
     result["timeframe"] = tf
+    result["symbol"] = symbol
 
     return jsonify(result)
 
@@ -959,20 +1013,23 @@ def backtest_strategy(strategy_id):
 
     settings = get_app_settings()
 
+    symbol = get_active_symbol()
+    api_symbol = get_api_symbol(symbol)
+
     timeframe = row[10] or "1hour"
     tf_seconds = TIMEFRAME_SECONDS.get(timeframe, 3600)
 
     # mise a jour incrementielle du timeframe de la strategie
     update_candles(
-        API_SYMBOL,
-        APP_SYMBOL,
+        api_symbol,
+        symbol,
         timeframe,
         tf_seconds,
         target=settings["history_size"],
         table=("candles" if timeframe == "1hour" else "candles_multi")
     )
 
-    all_rows = get_candles_tf(APP_SYMBOL, timeframe)
+    all_rows = get_candles_tf(symbol, timeframe)
     rows = all_rows[-settings["history_size"]:]
 
     result = run_backtest(
@@ -1005,6 +1062,7 @@ def backtest_strategy(strategy_id):
     result["strategy_id"] = strategy_id
     result["strategy_name"] = row[1]
     result["timeframe"] = timeframe
+    result["symbol"] = symbol
 
     return jsonify(result)
 
@@ -1015,11 +1073,13 @@ def backtest_strategy(strategy_id):
 @app.route("/backtest/period")
 def backtest_period():
 
+    symbol = get_active_symbol()
+
     tf = request.args.get("tf", "1hour")
     if tf not in TIMEFRAME_SECONDS:
         tf = "1hour"
 
-    first_ts = get_first_timestamp(APP_SYMBOL, tf)
+    first_ts = get_first_timestamp(symbol, tf)
 
     if not first_ts:
         return jsonify({"error": "no data"})
@@ -1035,14 +1095,15 @@ def backtest_period():
     if tf == "1hour":
         sql = ("SELECT COUNT(*) FROM candles "
                "WHERE symbol = ? AND timestamp >= ?")
-        params = [APP_SYMBOL, since_ts]
+        params = [symbol, since_ts]
     else:
         sql = ("SELECT COUNT(*) FROM candles_multi "
                "WHERE symbol = ? AND timestamp >= ? AND timeframe = ?")
-        params = [APP_SYMBOL, since_ts, tf]
+        params = [symbol, since_ts, tf]
     count = db.execute(sql, params).fetchone()[0]
 
     return jsonify({
+        "symbol": symbol,
         "timeframe": tf,
         "since": iso_date(since_ts),
         "first_available": iso_date(first_ts),
@@ -1053,6 +1114,9 @@ def backtest_period():
 
 @app.route("/backtest/compare")
 def compare_backtests():
+
+    symbol = get_active_symbol()
+    api_symbol = get_api_symbol(symbol)
 
     tf = request.args.get("tf", "1hour")
     if tf not in TIMEFRAME_SECONDS:
@@ -1065,15 +1129,15 @@ def compare_backtests():
 
     # mise a jour incrementielle des bougies du timeframe demande
     update_candles(
-        API_SYMBOL,
-        APP_SYMBOL,
+        api_symbol,
+        symbol,
         tf,
         tf_seconds,
         target=settings["history_size"],
         table=table
     )
 
-    first_ts = get_first_timestamp(APP_SYMBOL, tf)
+    first_ts = get_first_timestamp(symbol, tf)
 
     since_ts = parse_since_date(request.args.get("since"))
 
@@ -1082,13 +1146,14 @@ def compare_backtests():
         since_ts = first_ts
 
     if since_ts is not None:
-        rows = get_candles_tf(APP_SYMBOL, tf, since_ts)
+        rows = get_candles_tf(symbol, tf, since_ts)
     elif first_ts is not None:
-        rows = get_candles_tf(APP_SYMBOL, tf, first_ts)
+        rows = get_candles_tf(symbol, tf, first_ts)
     else:
         rows = []
 
     period = {
+        "symbol": symbol,
         "timeframe": tf,
         "since": iso_date(since_ts if since_ts is not None else (first_ts or 0)),
         "first_available": iso_date(first_ts) if first_ts else None,

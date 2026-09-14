@@ -106,7 +106,7 @@ tr:hover td{background:rgba(16,185,129,.03)}
     </div>
     <div class="flex items-center gap-5">
       <div class="flex items-center gap-2">
-        <span class="text-muted text-xs font-semibold">BCH/USDT</span>
+        <select id="hdr-symbol" onchange="changeSymbol(this.value)" class="bg-[var(--bg3)] text-xs text-[var(--fg)] border border-[var(--border)] rounded-lg px-2 py-1 mono font-semibold"></select>
         <span class="mono font-bold text-lg" id="hdr-price">---.--</span>
       </div>
       <div class="hidden sm:flex items-center gap-2">
@@ -393,7 +393,7 @@ function renderDashboard() {
   return `
     <div class="mb-6">
       <h1 class="font-display text-3xl font-bold tracking-tight">Tableau de bord</h1>
-      <p class="text-muted text-sm mt-1">Vue d'ensemble BCHUSDT</p>
+      <p class="text-muted text-sm mt-1" id="dash-subtitle">Vue d'ensemble</p>
     </div>
     <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-5">
       <div class="card">
@@ -430,7 +430,7 @@ function renderDashboard() {
       <div class="card">
         <h3 class="font-semibold text-sm mb-3 flex items-center gap-2"><i class="fas fa-sliders-h text-accent"></i>Configuration</h3>
         <div class="space-y-2 text-sm">
-          <div class="flex justify-between"><span class="text-muted">Paire</span><span class="mono">BCHUSDT</span></div>
+          <div class="flex justify-between"><span class="text-muted">Paire</span><span class="mono" id="dash-pair">---</span></div>
           <div class="flex justify-between"><span class="text-muted">Historique</span>${slot('dash-cfg-hist')}</div>
           <div class="flex justify-between"><span class="text-muted">RSI Periode</span>${slot('dash-cfg-rsi')}</div>
           <div class="flex justify-between"><span class="text-muted">Version</span>${slot('dash-cfg-ver')}</div>
@@ -445,6 +445,8 @@ async function initDashboard() {
     if (!stillOnPage('dashboard')) return;
 
     if (sig && !sig.error) {
+        safeText('dash-subtitle', "Vue d'ensemble " + (sig.pair || ''));
+        safeText('dash-pair', sig.pair || '---');
         fillSlot('dash-price', `<span class="stat-value text-accent mono">${fmt(sig.price,4)}</span>`);
         safeText('dash-price-time', 'MAJ: ' + fmtTime(sig.candle_time));
         fillSlot('dash-signal', signalBadge(sig.signal));
@@ -540,7 +542,7 @@ async function initDashboard() {
 function renderChart() {
   return `
     <div class="mb-5 flex items-center justify-between flex-wrap gap-3">
-      <div><h1 class="font-display text-3xl font-bold tracking-tight">Chart</h1><p class="text-muted text-sm mt-1">BCHUSDT avec indicateurs</p></div>
+      <div><h1 class="font-display text-3xl font-bold tracking-tight">Chart</h1><p class="text-muted text-sm mt-1" id="chart-subtitle">avec indicateurs</p></div>
       <div class="flex items-center gap-2">
         <select id="chart-strategy-select" class="bg-[var(--bg3)] text-sm text-[var(--fg)] border border-[var(--border)] rounded-lg px-3 py-1.5 mono"><option value="">Defaut (strategie active)</option></select>
         <button onclick="loadChart()" class="btn btn-primary btn-sm"><i class="fas fa-chart-line"></i>Charger</button>
@@ -572,7 +574,7 @@ async function loadChart() {
 
   const cfg = await api('/config');
   let emaFast=9,emaSlow=20,emaTrend=50,rsiPeriod=14;
-  if (cfg && !cfg.error) { emaFast=cfg.ema_fast;emaSlow=cfg.ema_slow;emaTrend=cfg.ema_trend;rsiPeriod=cfg.rsi_period; }
+  if (cfg && !cfg.error) { safeText('chart-subtitle', (cfg.symbol||'') + ' avec indicateurs'); emaFast=cfg.ema_fast;emaSlow=cfg.ema_slow;emaTrend=cfg.ema_trend;rsiPeriod=cfg.rsi_period; }
   const sel = document.getElementById('chart-strategy-select');
   if (sel && sel.value) {
     const s = await api('/strategy/'+sel.value);
@@ -1066,7 +1068,7 @@ async function runCompare() {
     const msg=(result&&result.error)?result.error:'Aucun resultat';
     document.getElementById('compare-content').innerHTML='<div class="card text-center py-10"><i class="fas fa-exclamation-triangle text-3xl text-hold mb-3"></i><p class="text-muted">'+msg+'</p></div>';return;
   }
-  const period=result.period?`<span class="text-muted font-normal text-xs ml-2 mono">${result.period.candles} bougies &middot; depuis le ${result.period.since}</span>`:'';
+  const period=result.period?`<span class="text-muted font-normal text-xs ml-2 mono">${result.period.symbol} &middot; ${result.period.candles} bougies ${result.period.timeframe} &middot; depuis le ${result.period.since}</span>`:'';
   const best=result.best_strategy;
   const maxPct=Math.max(...result.strategies.map(s=>Math.abs(s.profit_pct)),1);
   let html='';
@@ -1325,6 +1327,15 @@ async function refreshData() {
 // HEADER UPDATE
 // ============================
 async function updateHeader() {
+    const cfg = await api('/config');
+    const sel = document.getElementById('hdr-symbol');
+    if (cfg && !cfg.error && sel) {
+        if (!sel.dataset.ready) {
+            (cfg.supported_symbols||[]).forEach(sym => { const o=document.createElement('option');o.value=sym;o.textContent=sym.replace('USDT','/USDT');sel.appendChild(o); });
+            sel.dataset.ready = '1';
+        }
+        if (cfg.symbol) sel.value = cfg.symbol;
+    }
     const sig = await api('/signal');
     const connected = sig && !sig.error;
     safeStyle('hdr-status', 'background', connected ? 'var(--buy)' : 'var(--sell)');
@@ -1339,6 +1350,17 @@ async function updateHeader() {
     if (stats && !stats.error) safeText('side-candles', stats.stored_candles);
     const ver = await api('/version');
     if (ver) safeText('side-version', ver.version);
+}
+
+async function changeSymbol(sym) {
+    const r = await api('/settings/update', { method: 'POST', body: JSON.stringify({ symbol: sym }) });
+    if (r && r.success) {
+        toast('Actif change : ' + sym, 'success');
+        await updateHeader();
+        initPage(currentPage);
+    } else {
+        toast('Erreur changement actif', 'error');
+    }
 }
 
 // ============================
